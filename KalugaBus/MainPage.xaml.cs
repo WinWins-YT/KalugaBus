@@ -1,17 +1,23 @@
-﻿using Mapsui;
+﻿using KalugaBus.PointProviders;
+using KalugaBus.StyleRenders;
+using KalugaBus.Styles;
+using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
-using Mapsui.Nts;
+using Mapsui.Layers.AnimatedLayers;
 using Mapsui.Projections;
+using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
+using Mapsui.Styles.Thematics;
 using Mapsui.UI.Maui;
+using Mapsui.Widgets;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
 using Font = Mapsui.Styles.Font;
 
 namespace KalugaBus;
 
-public partial class MainPage : ContentPage
+public partial class MainPage
 {
     public MainPage()
     {
@@ -40,8 +46,10 @@ public partial class MainPage : ContentPage
     private static MemoryLayer CreatePointLayer()
     {
         var feature = new PointFeature(SphericalMercator.FromLonLat(36.240257, 54.514117).ToMPoint());
-        feature["number"] = 6;
-        var style = new LabelStyle
+        feature["number"] = "18";
+        feature["tag"] = "bus";
+        feature["rotation"] = 45;
+        /*var style = new LabelStyle
         {
             Text = "6",
             Font = new Font
@@ -53,19 +61,21 @@ public partial class MainPage : ContentPage
             ForeColor = Color.White,
             BackColor = new Brush(Color.Transparent)
         };
-        feature.Styles.Add(style);
+        feature.Styles.Add(style);*/
+        //feature.Styles.Add(new BusStyle());
         
         return new MemoryLayer
         {
             Name = "Points",
             IsMapInfoLayer = true,
             Features = [feature],
-            Style = new VectorStyle
+            Style = null
+            /*Style = new VectorStyle
             {
                 Fill = new Brush(Color.LightCoral), 
                 Outline = null,
                 MaxVisible = 30
-            }
+            }*/
         };
     }
 
@@ -85,17 +95,23 @@ public partial class MainPage : ContentPage
             var point = SphericalMercator.FromLonLat(36.2637, 54.5136).ToMPoint();
             map.CenterOnAndZoomTo(point, 25);
         };
-        MapView.Map.Layers.Add(CreatePointLayer());
+        //MapView.Map.Layers.Add(CreatePointLayer());
+        MapView.Map.Layers.Add(new AnimatedPointLayer(new BusPointProvider())
+        {
+            Name = "Points",
+            IsMapInfoLayer = true,
+            Style = new ThemeStyle(f => new BusStyle())
+        });
+        
+        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
+            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), new BusStyleRender());
+        
         MapView.Info += MapViewOnInfo;
         CreateLineLayer();
     }
 
     private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
     {
-        if (e.MapInfo.Feature is not PointFeature)
-            return;
         
-        var number = (int)e.MapInfo.Feature["number"];
-        await DisplayAlert("Alert", number.ToString(), "OK");
     }
 }
