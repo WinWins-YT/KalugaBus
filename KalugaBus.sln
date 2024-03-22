@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KalugaBus", "KalugaBus\KalugaBus.csproj", "{DF5BC1E2-C280-47CE-A8C9-9CFD3A6CAB4F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF5BC1E2-C280-47CE-A8C9-9CFD3A6CAB4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF5BC1E2-C280-47CE-A8C9-9CFD3A6CAB4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF5BC1E2-C280-47CE-A8C9-9CFD3A6CAB4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF5BC1E2-C280-47CE-A8C9-9CFD3A6CAB4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
