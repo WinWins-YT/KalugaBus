@@ -5,7 +5,6 @@ using Mapsui.Rendering;
 using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using SkiaSharp;
-using Debug = System.Diagnostics.Debug;
 
 namespace KalugaBus.StyleRenders;
 
@@ -20,14 +19,15 @@ public class BusStyleRender : ISkiaStyleRenderer
         var worldPoint = pointFeature.Point;
         var screenPoint = viewport.WorldToScreen(worldPoint);
 
-        var fillColor = new SKColor(255, 0, 0);
+        var trackType = (int)feature["track_type"]!;
+        var fillColor = trackType == 0 ? new SKColor(33, 70, 219) : new SKColor(255, 0, 0);
         var fillBrush = new SKPaint { Color = fillColor, IsAntialias = true };
         var textBrush = new SKPaint { Color = SKColors.White, TextAlign = SKTextAlign.Center };
 
         canvas.Save();
         canvas.Translate((float)screenPoint.X, (float)screenPoint.Y);
-        canvas.RotateDegrees((float)((double)pointFeature["rotation"]! - 270));
-        var radius = 2 / (float)viewport.Resolution;
+        canvas.RotateDegrees((float)(double)pointFeature["rotation"]!);
+        var radius = (float)Math.Clamp(2 / viewport.Resolution, 0.8, float.MaxValue);
         textBrush.TextSize = radius * 10;
         canvas.DrawCircle(0, 0, 10 * radius, fillBrush);
         canvas.DrawText(feature["number"]?.ToString(), 0, radius * 5, textBrush);

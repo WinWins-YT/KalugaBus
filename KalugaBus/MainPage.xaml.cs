@@ -11,6 +11,7 @@ using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using Mapsui.UI.Maui;
 using Mapsui.Widgets;
+using Microsoft.Maui.Devices.Sensors;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
 using Font = Mapsui.Styles.Font;
@@ -90,11 +91,8 @@ public partial class MainPage
         if (location is not null)
             MapView.MyLocationLayer.UpdateMyLocation(new Position(location.Latitude, location.Longitude));
         
-        MapView.Map.Home = map =>
-        {
-            var point = SphericalMercator.FromLonLat(36.2637, 54.5136).ToMPoint();
-            map.CenterOnAndZoomTo(point, 25);
-        };
+        var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
+        MapView.Map.Navigator.CenterOnAndZoomTo(point, 15);
         //MapView.Map.Layers.Add(CreatePointLayer());
         MapView.Map.Layers.Add(new AnimatedPointLayer(new BusPointProvider())
         {

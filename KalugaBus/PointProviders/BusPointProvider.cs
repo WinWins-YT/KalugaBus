@@ -9,8 +9,9 @@ using Mapsui.Providers;
 
 namespace KalugaBus.PointProviders;
 
-public class BusPointProvider : MemoryProvider, IDynamic
+public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
 {
+    private readonly CancellationTokenSource _tokenSource = new();
     private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(1));
 
     public BusPointProvider()
@@ -18,15 +19,28 @@ public class BusPointProvider : MemoryProvider, IDynamic
         Catch.TaskRun(RunTimerAsync);
     }
 
-    private (double Lon, double Lat) _previousCoordinates = (36.240257, 54.514117);
-    private MPoint _previousPoint = new();
+    private readonly Dictionary<string, (double Lon, double Lat)> _previousCoordinates = new()
+    {
+        ["1"] = (36.240257, 54.514117),
+        ["2"] = (36.240557, 54.518117)
+    };
+    private readonly Dictionary<string, MPoint> _previousPoints = new()
+    {
+        ["1"] = new MPoint(),
+        ["2"] = new MPoint()
+    };
+    
     private async Task RunTimerAsync()
     {
-        while (true)
+        while (!_tokenSource.IsCancellationRequested)
         {
-            await _timer.WaitForNextTickAsync();
+            await _timer.WaitForNextTickAsync(_tokenSource.Token);
 
-            _previousCoordinates = (_previousCoordinates.Lon + 0.00005, _previousCoordinates.Lat + 0.00005);
+            foreach (var previousCoordinate in _previousCoordinates.Keys)
+            {
+                var coords = _previousCoordinates[previousCoordinate];
+                _previousCoordinates[previousCoordinate] = (coords.Lon + 0.00005, coords.Lat + 0.00005);
+            }
 
             OnDataChanged();
         }
@@ -34,15 +48,23 @@ public class BusPointProvider : MemoryProvider, IDynamic
 
     public override Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
     {
-        var points = new List<IFeature>();
-        var busFeature = new PointFeature(SphericalMercator.FromLonLat(_previousCoordinates.Lon, _previousCoordinates.Lat).ToMPoint());
-        busFeature["number"] = "18";
-        busFeature["tag"] = "bus";
-        busFeature["rotation"] = _previousPoint.AngleOf(busFeature.Point);
-        busFeature["ID"] = "1";
-        points.Add(busFeature);
-        _previousPoint = busFeature.Point;
-        return Task.FromResult(points.AsEnumerable());
+        var points = _previousPoints.Keys.Select(x =>
+        {
+            var busFeature = new PointFeature(SphericalMercator
+                .FromLonLat(_previousCoordinates[x].Lon, _previousCoordinates[x].Lat).ToMPoint());
+            
+            busFeature["number"] = "18";
+            busFeature["tag"] = "bus";
+            busFeature["rotation"] = _previousPoints[x].AngleTo(busFeature.Point);
+            busFeature["track_type"] = 0;
+            busFeature["ID"] = x;
+            
+            _previousPoints[x] = busFeature.Point;
+            
+            return (IFeature)busFeature;
+        });
+        
+        return Task.FromResult(points);
     }
 
     void IDynamic.DataHasChanged()
@@ -56,4 +78,12 @@ public class BusPointProvider : MemoryProvider, IDynamic
     }
 
     public event DataChangedEventHandler? DataChanged;
+
+    public void Dispose()
+    {
+        _tokenSource.Cancel();
+        _tokenSource.Dispose();
+        _timer.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }
