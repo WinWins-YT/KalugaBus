@@ -82,17 +82,31 @@ public partial class MainPage
 
     private async void MainPage_OnLoaded(object? sender, EventArgs e)
     {
+        MapView.Map.Home = map =>
+        {
+            var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
+            map.CenterOnAndZoomTo(point, 15);
+        };
+        
         await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
 
-        var location = await Geolocation.GetLastKnownLocationAsync();
-        
+        Location? location = null;
+        try
+        {
+            location = await Geolocation.GetLastKnownLocationAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            await DisplayAlert("Местоположение недоступно",
+                "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
+            Application.Current?.Quit();
+        }
+
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
         
         if (location is not null)
             MapView.MyLocationLayer.UpdateMyLocation(new Position(location.Latitude, location.Longitude));
         
-        var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
-        MapView.Map.Navigator.CenterOnAndZoomTo(point, 15);
         //MapView.Map.Layers.Add(CreatePointLayer());
         MapView.Map.Layers.Add(new AnimatedPointLayer(new BusPointProvider())
         {
@@ -105,7 +119,7 @@ public partial class MainPage
             MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), new BusStyleRender());
         
         MapView.Info += MapViewOnInfo;
-        CreateLineLayer();
+        //CreateLineLayer();
     }
 
     private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
