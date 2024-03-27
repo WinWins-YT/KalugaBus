@@ -82,6 +82,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             busFeature["tag"] = "bus";
             busFeature["rotation"] = _previousPoints[device.Id].AngleTo(busFeature.Point);
             busFeature["track_type"] = device.TrackType;
+            busFeature["track_id"] = device.TrackId;
             busFeature["ID"] = device.Id;
 
             _previousPoints[device.Id] = busFeature.Point;
