@@ -12,6 +12,7 @@ using Mapsui.Styles.Thematics;
 using Mapsui.UI.Maui;
 using Mapsui.Widgets;
 using Microsoft.Maui.Devices.Sensors;
+using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
 using Font = Mapsui.Styles.Font;
@@ -20,6 +21,9 @@ namespace KalugaBus;
 
 public partial class MainPage
 {
+    private readonly BusPointProvider _busPointProvider = new();
+    private readonly BusStyle _busStyle = new();
+    
     public MainPage()
     {
         InitializeComponent();
@@ -80,50 +84,91 @@ public partial class MainPage
         };
     }
 
-    private async void MainPage_OnLoaded(object? sender, EventArgs e)
+    private void MainPage_OnLoaded(object? sender, EventArgs e)
     {
         MapView.Map.Home = map =>
         {
             var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
             map.CenterOnAndZoomTo(point, 15);
         };
-        
-        await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-
-        Location? location = null;
-        try
-        {
-            location = await Geolocation.GetLastKnownLocationAsync();
-        }
-        catch (InvalidOperationException)
-        {
-            await DisplayAlert("Местоположение недоступно",
-                "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
-            Application.Current?.Quit();
-        }
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
         
-        if (location is not null)
-            MapView.MyLocationLayer.UpdateMyLocation(new Position(location.Latitude, location.Longitude));
-        
         //MapView.Map.Layers.Add(CreatePointLayer());
-        MapView.Map.Layers.Add(new AnimatedPointLayer(new BusPointProvider())
+        MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
             Name = "Points",
             IsMapInfoLayer = true,
-            Style = new ThemeStyle(f => new BusStyle())
+            Style = new ThemeStyle(f => _busStyle)
         });
         
         if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
             MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), new BusStyleRender());
         
         MapView.Info += MapViewOnInfo;
-        //CreateLineLayer();
+        MapView.MapClicked += MapViewOnMapClicked;
+
+        Task.Run(UpdateLocation);
     }
 
-    private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
+    private void MapViewOnMapClicked(object? sender, MapClickedEventArgs e)
     {
+        /*_busPointProvider.ShowTrackId = -1;
         
+        MapView.Map.Layers.Remove(x => x.Name == "Points");
+        MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
+        {
+            Name = "Points",
+            IsMapInfoLayer = true,
+            Style = new ThemeStyle(f => new BusStyle())
+        });*/
+    }
+
+    private void MapViewOnInfo(object? sender, MapInfoEventArgs e)
+    {
+        var feature = e.MapInfo?.Feature;
+        if (feature is not PointFeature busPoint || busPoint["tag"]?.ToString() != "bus")
+        {
+            _busPointProvider.ShowTrackId = -1;
+            return;
+        }
+
+        /*MapView.Map.Layers.Remove(x => x.Name == "Points");
+        MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
+        {
+            Name = "Points",
+            IsMapInfoLayer = true,
+            Style = new ThemeStyle(f => new BusStyle())
+        });*/
+        
+        (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
+        
+        _busPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
+    }
+
+    private async Task UpdateLocation()
+    {
+        var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+
+        await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        while (true)
+        {
+            Location? location = null;
+            try
+            {
+                location = await Geolocation.GetLastKnownLocationAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                await DisplayAlert("Местоположение недоступно",
+                    "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
+                Application.Current?.Quit();
+            }
+            
+            if (location is not null)
+                MapView.MyLocationLayer.UpdateMyLocation(new Position(location.Latitude, location.Longitude));
+
+            await timer.WaitForNextTickAsync();
+        }
     }
 }
