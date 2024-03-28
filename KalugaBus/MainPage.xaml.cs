@@ -11,11 +11,14 @@ using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using Mapsui.UI.Maui;
 using Mapsui.Widgets;
+using Mapsui.Widgets.Zoom;
 using Microsoft.Maui.Devices.Sensors;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
 using Font = Mapsui.Styles.Font;
+using HorizontalAlignment = Mapsui.Widgets.HorizontalAlignment;
+using VerticalAlignment = Mapsui.Widgets.VerticalAlignment;
 
 namespace KalugaBus;
 
@@ -23,65 +26,11 @@ public partial class MainPage
 {
     private readonly BusPointProvider _busPointProvider = new();
     private readonly BusStyle _busStyle = new();
+    private readonly BusStyleRender _busStyleRender = new();
     
     public MainPage()
     {
         InitializeComponent();
-    }
-
-    private void CreateLineLayer()
-    {
-        var polygon = new Polyline
-        {
-            Tag = "track",
-            Positions =
-            {
-                new Position(54.515321, 36.248665),
-                new Position(54.512669, 36.271408),
-                new Position(54.499208, 36.280574)
-            },
-            StrokeColor = Colors.Red,
-            StrokeWidth = 5f,
-            MaxVisible = 30
-        };
-        
-        MapView.Drawables.Add(polygon);
-    }
-    
-    private static MemoryLayer CreatePointLayer()
-    {
-        var feature = new PointFeature(SphericalMercator.FromLonLat(36.240257, 54.514117).ToMPoint());
-        feature["number"] = "18";
-        feature["tag"] = "bus";
-        feature["rotation"] = 45;
-        /*var style = new LabelStyle
-        {
-            Text = "6",
-            Font = new Font
-            {
-                Bold = true,
-                FontFamily = "OpenSans",
-            },
-            MaxVisible = 30,
-            ForeColor = Color.White,
-            BackColor = new Brush(Color.Transparent)
-        };
-        feature.Styles.Add(style);*/
-        //feature.Styles.Add(new BusStyle());
-        
-        return new MemoryLayer
-        {
-            Name = "Points",
-            IsMapInfoLayer = true,
-            Features = [feature],
-            Style = null
-            /*Style = new VectorStyle
-            {
-                Fill = new Brush(Color.LightCoral), 
-                Outline = null,
-                MaxVisible = 30
-            }*/
-        };
     }
 
     private void MainPage_OnLoaded(object? sender, EventArgs e)
@@ -102,26 +51,21 @@ public partial class MainPage
             Style = new ThemeStyle(f => _busStyle)
         });
         
+        MapView.Map.Widgets.Add(new ZoomInOutWidget
+        {
+            Orientation = Orientation.Vertical,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            MarginX = 20,
+            MarginY = 20,
+        });
+        
         if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), new BusStyleRender());
+            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRender);
         
         MapView.Info += MapViewOnInfo;
-        MapView.MapClicked += MapViewOnMapClicked;
 
         Task.Run(UpdateLocation);
-    }
-
-    private void MapViewOnMapClicked(object? sender, MapClickedEventArgs e)
-    {
-        /*_busPointProvider.ShowTrackId = -1;
-        
-        MapView.Map.Layers.Remove(x => x.Name == "Points");
-        MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
-        {
-            Name = "Points",
-            IsMapInfoLayer = true,
-            Style = new ThemeStyle(f => new BusStyle())
-        });*/
     }
 
     private void MapViewOnInfo(object? sender, MapInfoEventArgs e)
@@ -129,17 +73,10 @@ public partial class MainPage
         var feature = e.MapInfo?.Feature;
         if (feature is not PointFeature busPoint || busPoint["tag"]?.ToString() != "bus")
         {
+            (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
             _busPointProvider.ShowTrackId = -1;
             return;
         }
-
-        /*MapView.Map.Layers.Remove(x => x.Name == "Points");
-        MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
-        {
-            Name = "Points",
-            IsMapInfoLayer = true,
-            Style = new ThemeStyle(f => new BusStyle())
-        });*/
         
         (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
         

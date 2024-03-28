@@ -8,5 +8,7 @@
     <maui:MapView x:Name="MapView"
                   RotationLock="True"
                   VerticalOptions="FillAndExpand"
-                  HorizontalOptions="Fill" />
+                  HorizontalOptions="Fill"
+                  IsZoomButtonVisible="False"
+                  IsNorthingButtonVisible="False"/>
 </ContentPage>

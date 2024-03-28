@@ -26,7 +26,6 @@ public class AnimatedPointLayer : BaseLayer, IAsyncDataFetcher, ILayerDataSource
                 });
             };
 
-        // Todo: There should be a assignable function to find the previous feature, so the user has all flexibility
         IdField = "ID";
     }
 

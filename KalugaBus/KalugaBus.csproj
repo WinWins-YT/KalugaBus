@@ -68,6 +68,7 @@
       <ApplicationTitle>Транспорт Калуги</ApplicationTitle>
       <ApplicationId>com.danimatcorp.kalugabus</ApplicationId>
       <ApplicationDisplayVersion>0.5.0</ApplicationDisplayVersion>
+      <AndroidPackageFormat>apk</AndroidPackageFormat>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-ios|AnyCPU'">
