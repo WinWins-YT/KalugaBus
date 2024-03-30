@@ -6,10 +6,25 @@
     xmlns:local="clr-namespace:KalugaBus"
     Shell.FlyoutBehavior="Disabled"
     Title="KalugaBus">
+    
+    <TabBar>
+        <Tab Title="Карта"
+             Icon="map_icon.png">
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        </Tab>
+        <Tab Title="Маршруты"
+             Icon="road_route_map_icon.png">
+            <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
+        </Tab>
+        <Tab Title="Остановки"
+             Icon="bus_stop_icon.png">
+            <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
+        </Tab>
+    </TabBar>
 
-    <ShellContent
+    <!--<ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Route="MainPage" />-->
 
 </Shell>

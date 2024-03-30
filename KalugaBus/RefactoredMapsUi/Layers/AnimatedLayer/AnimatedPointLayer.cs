@@ -101,7 +101,8 @@ public class AnimatedPointLayer : BaseLayer, IAsyncDataFetcher, ILayerDataSource
     public override bool UpdateAnimations()
     {
         var animating = false;
-        foreach (var feature in _features)
+
+        foreach (var feature in _features.ToArray())
         {
             if (feature.UpdateAnimation(AnimationDuration, Easing, DistanceThreshold))
                 animating = true;

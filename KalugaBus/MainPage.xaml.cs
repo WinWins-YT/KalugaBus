@@ -35,6 +35,9 @@ public partial class MainPage
 
     private void MainPage_OnLoaded(object? sender, EventArgs e)
     {
+        if (MapView.Map.Layers.Any(x => x.Name == "Points"))
+            return;
+
         MapView.Map.Home = map =>
         {
             var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
@@ -65,7 +68,7 @@ public partial class MainPage
         
         MapView.Info += MapViewOnInfo;
 
-        Task.Run(UpdateLocation);
+        //Task.Run(UpdateLocation);
     }
 
     private void MapViewOnInfo(object? sender, MapInfoEventArgs e)
@@ -87,7 +90,10 @@ public partial class MainPage
     {
         var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
-        await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        var permission = await CheckAndRequestLocationPermission();
+        if (permission != PermissionStatus.Granted)
+            return;
+        
         while (true)
         {
             Location? location = null;
@@ -99,7 +105,7 @@ public partial class MainPage
             {
                 await DisplayAlert("Местоположение недоступно",
                     "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
-                Application.Current?.Quit();
+                break;
             }
             
             if (location is not null)
@@ -107,5 +113,31 @@ public partial class MainPage
 
             await timer.WaitForNextTickAsync();
         }
+    }
+    
+    private async Task<PermissionStatus> CheckAndRequestLocationPermission()
+    {
+        var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+
+        if (status == PermissionStatus.Granted)
+            return status;
+
+        if (status == PermissionStatus.Denied && DeviceInfo.Platform == DevicePlatform.iOS)
+        {
+            await DisplayAlert("Местоположение недоступно",
+                "Для отображения местоположения на карте, необходимо разрешить местоположение. Включите его в настройках приложения", "ОК");
+            
+            return status;
+        }
+
+        if (Permissions.ShouldShowRationale<Permissions.LocationWhenInUse>())
+        {
+            await DisplayAlert("Местоположение недоступно",
+                "Для отображения местоположения на карте, необходимо разрешить местоположение", "ОК");
+        }
+
+        status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+
+        return status;
     }
 }
