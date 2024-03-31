@@ -4,7 +4,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:maui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
              x:Class="KalugaBus.MainPage"
-             Loaded="MainPage_OnLoaded">
+             Loaded="MainPage_OnLoaded"
+             Title="Карта">
+    
     <maui:MapView x:Name="MapView"
                   RotationLock="True"
                   VerticalOptions="FillAndExpand"

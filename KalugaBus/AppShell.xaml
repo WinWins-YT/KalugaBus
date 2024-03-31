@@ -8,16 +8,22 @@
     Title="KalugaBus">
     
     <TabBar>
-        <Tab Title="Карта"
-             Icon="map_icon.png">
+        <Tab x:Name="MapTab"
+             Title="Карта"
+             Icon="map_icon.png"
+             Route="MainPage">
             <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
         </Tab>
-        <Tab Title="Маршруты"
-             Icon="road_route_map_icon.png">
+        <Tab x:Name="RoutesTab"
+             Title="Маршруты"
+             Icon="road_route_map_icon.png"
+             Route="RoutesPage">
             <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
         </Tab>
-        <Tab Title="Остановки"
-             Icon="bus_stop_icon.png">
+        <Tab x:Name="StopsTab"
+             Title="Остановки"
+             Icon="bus_stop_icon.png"
+             Route="StopsPage">
             <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
         </Tab>
     </TabBar>

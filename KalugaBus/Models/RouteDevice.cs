@@ -6,4 +6,5 @@ public class RouteDevice
     public string ImageUrl { get; set; } = "";
     public string Name { get; set; } = "";
     public string Route { get; set; } = "";
+    public bool IsFavoured { get; set; }
 }

@@ -5,14 +5,17 @@
              xmlns:local="using:KalugaBus"
              xmlns:models="using:KalugaBus.Models"
              x:Class="KalugaBus.RoutesPage"
-             Loaded="RoutesPage_OnLoaded">
+             Loaded="RoutesPage_OnLoaded"
+             x:Name="ContentPage"
+             Title="Маршруты">
     
     <ContentPage.Content>
         <ListView ItemsSource="{Binding Devices}" 
                   x:DataType="local:RoutesPage" 
                   SelectionMode="None"
                   RowHeight="{OnPlatform Android=60}"
-                  x:Name="BusList">
+                  x:Name="BusList"
+                  ItemTapped="BusList_OnItemTapped">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <ViewCell>
@@ -23,6 +26,7 @@
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Image Grid.RowSpan="2"
@@ -36,9 +40,31 @@
                                    FontAttributes="Bold" />
                             <Label Grid.Row="1"
                                    Grid.Column="1"
+                                   HorizontalOptions="Fill"
                                    Text="{Binding Route}"
                                    FontAttributes="Italic"
                                    VerticalOptions="End" />
+                            <ImageButton x:Name="Favourite"
+                                Grid.RowSpan="2"
+                                Grid.Row="0" Grid.Column="2"
+                                Margin="10,0,10,0"
+                                HorizontalOptions="End"
+                                HeightRequest="20" WidthRequest="20"
+                                Command="{Binding Source={x:Reference ContentPage}, Path=FavouriteCommand}"
+                                CommandParameter="{Binding TrackId}">
+                                <ImageButton.Style>
+                                    <Style TargetType="{x:Type ImageButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger TargetType="{x:Type ImageButton}" Binding="{Binding IsFavoured}" Value="True">
+                                                <Setter Property="Source" Value="star_icon.png" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="{x:Type ImageButton}" Binding="{Binding IsFavoured}" Value="False">
+                                                <Setter Property="Source" Value="star_icon_inactive.png" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ImageButton.Style>
+                            </ImageButton>
                         </Grid>
                     </ViewCell>
                 </DataTemplate>

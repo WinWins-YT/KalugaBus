@@ -117,6 +117,7 @@ public class AnimatedPointLayer : BaseLayer, IAsyncDataFetcher, ILayerDataSource
     public void ClearCache()
     {
         _features.Clear();
+        UpdateDataAsync().ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     public IProvider? DataSource => _dataSource;

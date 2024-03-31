@@ -11,8 +11,10 @@ public partial class RoutesPage : ContentPage
 {
     private readonly HttpClient _httpClient = new();
     private readonly JsonSerializerOptions _jsonSerializerOptions;
+    private readonly List<long> _favouredTracks = [];
     
     public ObservableCollection<RouteDevice> Devices { get; set; } = [];
+    public Command FavouriteCommand { get; set; }
     
     public RoutesPage()
     {
@@ -24,19 +26,32 @@ public partial class RoutesPage : ContentPage
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
+        FavouriteCommand = new Command(Favourite_OnClicked);
+        
+        var json = Preferences.Get("favoured_tracks", "");
+        if (!string.IsNullOrEmpty(json))
+            _favouredTracks = JsonSerializer.Deserialize<List<long>>(json)!;
     }
 
     private async void RoutesPage_OnLoaded(object? sender, EventArgs e)
     {
-        BusList.IsVisible = false;
         IsBusy = true;
+        Devices.Clear();
 
-        var devices = await LoadDevices();
-        Devices = devices.ToObservableCollection();
-        OnPropertyChanged("Devices");
-        
+        var devices = (await LoadDevices()).ToList();
+        var favouredDevices = devices.Where(x => _favouredTracks.Contains(x.TrackId)).ToList();
+        foreach (var favouredDevice in favouredDevices)
+        {
+            favouredDevice.IsFavoured = true;
+            Devices.Add(favouredDevice);
+        }
+
+        foreach (var routeDevice in devices.Except(favouredDevices))
+        {
+            Devices.Add(routeDevice);
+        }
+
         IsBusy = false;
-        BusList.IsVisible = true;
     }
 
     private async Task<IEnumerable<RouteDevice>> LoadDevices()
@@ -50,4 +65,34 @@ public partial class RoutesPage : ContentPage
 
     [GeneratedRegex("<a href=\"#\" onclick=\"SetCurrentRoute\\(this, (\\d+)\\);\">(.{1,20})<\\/a>")]
     private static partial Regex BusIndexRegex();
+
+    private async void BusList_OnItemTapped(object? sender, ItemTappedEventArgs e)
+    {
+        if (e.Item is not RouteDevice device)
+            return;
+        
+        await Shell.Current.GoToAsync($"///{nameof(MainPage)}?TrackId={device.TrackId}");
+    }
+
+    private void Favourite_OnClicked(object trackId)
+    {
+        var id = (long)trackId;
+        var device = Devices.First(x => x.TrackId == id);
+        var deviceIndex = Devices.IndexOf(device);
+        Devices.Remove(device);
+        if (device.IsFavoured)
+        {
+            device.IsFavoured = false;
+            _favouredTracks.Remove(device.TrackId);
+        }
+        else
+        {
+            device.IsFavoured = true;
+            _favouredTracks.Add(id);
+        }
+        Devices.Insert(deviceIndex, device);
+
+        var json = JsonSerializer.Serialize(_favouredTracks);
+        Preferences.Set("favoured_tracks", json);
+    }
 }

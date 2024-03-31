@@ -22,7 +22,7 @@ using VerticalAlignment = Mapsui.Widgets.VerticalAlignment;
 
 namespace KalugaBus;
 
-public partial class MainPage
+public partial class MainPage : IQueryAttributable
 {
     private readonly BusPointProvider _busPointProvider = new();
     private readonly BusStyle _busStyle = new();
@@ -139,5 +139,11 @@ public partial class MainPage
         status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
 
         return status;
+    }
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
+        _busPointProvider.ShowTrackId = Convert.ToInt64(query["TrackId"]);
     }
 }
