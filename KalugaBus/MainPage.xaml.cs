@@ -4,19 +4,12 @@ using KalugaBus.Styles;
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
-using Mapsui.Layers.AnimatedLayers;
 using Mapsui.Projections;
 using Mapsui.Rendering.Skia;
-using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using Mapsui.UI.Maui;
-using Mapsui.Widgets;
 using Mapsui.Widgets.Zoom;
-using Microsoft.Maui.Devices.Sensors;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
-using Brush = Mapsui.Styles.Brush;
-using Color = Mapsui.Styles.Color;
-using Font = Mapsui.Styles.Font;
 using HorizontalAlignment = Mapsui.Widgets.HorizontalAlignment;
 using VerticalAlignment = Mapsui.Widgets.VerticalAlignment;
 
@@ -68,7 +61,7 @@ public partial class MainPage : IQueryAttributable
         
         MapView.Info += MapViewOnInfo;
 
-        //Task.Run(UpdateLocation);
+        Task.Run(UpdateLocation);
     }
 
     private void MapViewOnInfo(object? sender, MapInfoEventArgs e)
@@ -88,7 +81,7 @@ public partial class MainPage : IQueryAttributable
 
     private async Task UpdateLocation()
     {
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 
         var permission = await CheckAndRequestLocationPermission();
         if (permission != PermissionStatus.Granted)

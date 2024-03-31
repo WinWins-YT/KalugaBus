@@ -12,6 +12,7 @@ public partial class RoutesPage : ContentPage
     private readonly HttpClient _httpClient = new();
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly List<long> _favouredTracks = [];
+    private bool _favouritesChanged;
     
     public ObservableCollection<RouteDevice> Devices { get; set; } = [];
     public Command FavouriteCommand { get; set; }
@@ -35,6 +36,9 @@ public partial class RoutesPage : ContentPage
 
     private async void RoutesPage_OnLoaded(object? sender, EventArgs e)
     {
+        if (Devices.Any() && !_favouritesChanged)
+            return;
+        
         IsBusy = true;
         Devices.Clear();
 
@@ -52,6 +56,7 @@ public partial class RoutesPage : ContentPage
         }
 
         IsBusy = false;
+        _favouritesChanged = false;
     }
 
     private async Task<IEnumerable<RouteDevice>> LoadDevices()
@@ -91,6 +96,7 @@ public partial class RoutesPage : ContentPage
             _favouredTracks.Add(id);
         }
         Devices.Insert(deviceIndex, device);
+        _favouritesChanged = true;
 
         var json = JsonSerializer.Serialize(_favouredTracks);
         Preferences.Set("favoured_tracks", json);
