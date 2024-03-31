@@ -129,7 +129,10 @@ public partial class MainPage : IQueryAttributable
                 "Для отображения местоположения на карте, необходимо разрешить местоположение", "ОК");
         }
 
-        status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        });
 
         return status;
     }
