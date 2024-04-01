@@ -21,7 +21,6 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
     private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(3));
     private readonly HttpClient _httpClient = new();
     private List<Device> _devices = [];
-    private List<TrackStations> _trackStations = [];
     public List<TrackPolyline> TrackPolylines = [];
     private readonly Dictionary<long, long> _incomingIds = new();
     private long _showTrackId = -1;
@@ -89,16 +88,6 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
     {
         try
         {
-            var trackStationsJson =
-                await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_stations");
-            _trackStations =
-                JsonSerializer.Deserialize<List<TrackStations>>(trackStationsJson, _jsonSerializerOptions) ??
-                throw new InvalidOperationException("Wrong JSON was received from get_stations");
-            foreach (var trackStation in _trackStations)
-            {
-                trackStation.Stations = trackStation.Stations.DistinctBy(x => x.Id).ToList();
-            }
-
             var trackPolylineJson =
                 await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_polylines");
             TrackPolylines =

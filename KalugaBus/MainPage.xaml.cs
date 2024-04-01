@@ -92,7 +92,7 @@ public partial class MainPage : IQueryAttributable
             Location? location = null;
             try
             {
-                location = await Geolocation.GetLastKnownLocationAsync();
+                location = await Geolocation.GetLocationAsync();
             }
             catch (InvalidOperationException)
             {

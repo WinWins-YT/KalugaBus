@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="using:KalugaBus"
+             xmlns:models="using:KalugaBus.Models"
+             x:Class="KalugaBus.StopInfoPage"
+             x:DataType="local:StopInfoPage"
+             Loaded="StopInfoPage_OnLoaded"
+             Title="{Binding Stop.Station.Name}">
+    
+    <ContentPage.Content>
+        <ListView x:Name="BusStopList"
+                  RowHeight="{OnPlatform Android=60}"
+                  SelectionMode="None"
+                  ItemsSource="{Binding StopInfos}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <Grid Padding="10" x:DataType="models:StopInfo">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="{Binding TrackName}"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="1" Grid.Column="0"
+                                   Text="{Binding Direction}" />
+                            <Label Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                                   Text="{Binding EstimatedTime}"
+                                   HorizontalTextAlignment="End"
+                                   HorizontalOptions="End" />
+                        </Grid>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </ContentPage.Content>
+</ContentPage>

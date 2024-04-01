@@ -24,7 +24,7 @@
              Title="Остановки"
              Icon="bus_stop_icon.png"
              Route="StopsPage">
-            <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
+            <ShellContent ContentTemplate="{DataTemplate local:StopsPage}" />
         </Tab>
     </TabBar>
 
