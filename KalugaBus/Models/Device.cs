@@ -12,6 +12,6 @@ public class Device
     [JsonPropertyName("dir")] public int Direction { get; set; }
     public float? Speed { get; set; }
     public string TrackName { get; set; } = "";
-    public int TrackType { get; set; }
+    public int? TrackType { get; set; }
     public string Number { get; set; } = "";
 }

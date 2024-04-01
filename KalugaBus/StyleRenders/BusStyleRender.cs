@@ -30,7 +30,7 @@ public class BusStyleRender : ISkiaStyleRenderer
         var worldPoint = pointFeature.Point;
         var screenPoint = viewport.WorldToScreen(worldPoint);
 
-        var trackType = (int)feature["track_type"]!;
+        var trackType = (int)(feature["track_type"] ?? 1);
         var fillBrush = trackType == 0 ? _bluePaint : _redPaint;
 
         var radius = (float)Math.Clamp(2 / viewport.Resolution, 0.8, float.MaxValue) * 10;
