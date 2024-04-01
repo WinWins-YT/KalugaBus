@@ -40,7 +40,16 @@ public partial class StopsPage : ContentPage
                 "Чтобы видеть остановки в порядке отдаления от них, необходимо разрешить местоположение", "OK");
         else
         {
-            _userLocation = await Geolocation.GetLocationAsync();
+            try
+            {
+                _userLocation = await Geolocation.GetLocationAsync();
+            }
+            catch (FeatureNotEnabledException)
+            {
+                await DisplayAlert("Местоположение отключено",
+                    "Чтобы видеть остановки в порядке отдаления от них, необходимо включить местоположение", "OK");
+            }
+            catch (FeatureNotSupportedException) {}
         }
         
         var stops = await FetchData();
