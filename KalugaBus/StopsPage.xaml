@@ -13,7 +13,8 @@
                   x:DataType="local:StopsPage"
                   RowHeight="{OnPlatform Android=60}"
                   SelectionMode="None"
-                  ItemsSource="{Binding Stops}">
+                  ItemsSource="{Binding Stops}"
+                  ItemTapped="StopsList_OnItemTapped">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <ViewCell>

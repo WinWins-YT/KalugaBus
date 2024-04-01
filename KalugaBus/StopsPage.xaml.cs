@@ -107,4 +107,12 @@ public partial class StopsPage : ContentPage
 
         return Task.FromResult(stopsList.OrderBy(x => x.Distance).AsEnumerable());
     }
+
+    private async void StopsList_OnItemTapped(object? sender, ItemTappedEventArgs e)
+    {
+        if (e.Item is not Stop stop)
+            return;
+
+        await Navigation.PushAsync(new StopInfoPage(stop, _stationDict[stop].ToArray()));
+    }
 }

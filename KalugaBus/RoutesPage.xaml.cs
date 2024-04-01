@@ -2,6 +2,8 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Core.Extensions;
 using KalugaBus.Models;
 
@@ -42,17 +44,24 @@ public partial class RoutesPage : ContentPage
         IsBusy = true;
         Devices.Clear();
 
-        var devices = (await LoadDevices()).ToList();
-        var favouredDevices = devices.Where(x => _favouredTracks.Contains(x.TrackId)).ToList();
-        foreach (var favouredDevice in favouredDevices)
+        try
         {
-            favouredDevice.IsFavoured = true;
-            Devices.Add(favouredDevice);
-        }
+            var devices = (await LoadDevices()).ToList();
+            var favouredDevices = devices.Where(x => _favouredTracks.Contains(x.TrackId)).ToList();
+            foreach (var favouredDevice in favouredDevices)
+            {
+                favouredDevice.IsFavoured = true;
+                Devices.Add(favouredDevice);
+            }
 
-        foreach (var routeDevice in devices.Except(favouredDevices))
+            foreach (var routeDevice in devices.Except(favouredDevices))
+            {
+                Devices.Add(routeDevice);
+            }
+        }
+        catch (Exception ex)
         {
-            Devices.Add(routeDevice);
+            await DisplayAlert("Произошла ошибка", ex.Message, "OK");
         }
 
         IsBusy = false;
