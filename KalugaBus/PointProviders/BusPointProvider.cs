@@ -116,6 +116,8 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             
             var busFeature = new PointFeature(SphericalMercator
                 .FromLonLat(device.Longitude, device.Latitude).ToMPoint());
+            _previousRotations.TryAdd(device.Id, 0);
+            
             var rotation = _showTrackIdSet
                 ? _previousRotations[device.Id]
                 : _previousPoints[device.Id].AngleTo(busFeature.Point);
