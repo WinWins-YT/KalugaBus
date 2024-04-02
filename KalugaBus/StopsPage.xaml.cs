@@ -51,11 +51,18 @@ public partial class StopsPage : ContentPage
             }
             catch (FeatureNotSupportedException) {}
         }
-        
-        var stops = await FetchData();
-        foreach (var stop in stops)
+
+        try
         {
-            Stops.Add(stop);
+            var stops = await FetchData();
+            foreach (var stop in stops)
+            {
+                Stops.Add(stop);
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Произошла ошибка", ex.Message, "OK");
         }
 
         IsBusy = false;
@@ -80,14 +87,10 @@ public partial class StopsPage : ContentPage
         var trackStations =
             JsonSerializer.Deserialize<List<TrackStations>>(trackStationsJson, _jsonSerializerOptions) ??
             throw new InvalidOperationException("Wrong JSON was received from get_stations");
-        foreach (var trackStation in trackStations)
-        {
-            trackStation.Stations = trackStation.Stations.DistinctBy(x => x.Id).ToList();
-        }
 
         foreach (var trackStation in trackStations)
         {
-            foreach (var station in trackStation.Stations)
+            foreach (var station in trackStation.Stations.DistinctBy(x => x.Id))
             {
                 if (_stationDict.All(x => x.Key.Station.Name != station.Name))
                     _stationDict.Add(new Stop
