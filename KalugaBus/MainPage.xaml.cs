@@ -1,4 +1,5 @@
-﻿using KalugaBus.PointProviders;
+﻿using System.Diagnostics;
+using KalugaBus.PointProviders;
 using KalugaBus.StyleRenders;
 using KalugaBus.Styles;
 using Mapsui;
@@ -60,7 +61,7 @@ public partial class MainPage : IQueryAttributable
             MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRender);
         
         MapView.Info += MapViewOnInfo;
-
+        
         Task.Run(UpdateLocation);
     }
 
@@ -81,6 +82,23 @@ public partial class MainPage : IQueryAttributable
 
     private async Task UpdateLocation()
     {
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var disclaimerShown = Preferences.Get("disclaimer_shown", false);
+            if (!disclaimerShown)
+            {
+                var answer = await DisplayAlert("Дисклеймер",
+                    "Данное приложение не связано с государственными органами и не несет ответственности за информацию, которую выводит. Данные берутся с сайта https://bus40.su",
+                    "Политика конфиденциальности", "OK");
+                if (answer)
+                {
+                    await Browser.Default.OpenAsync("https://danimatcorp.com/bus40/privacy.html", BrowserLaunchMode.SystemPreferred);
+                }
+                
+                Preferences.Set("disclaimer_shown", true);
+            }
+        });
+        
         var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 
         var permission = await CheckAndRequestLocationPermission();
