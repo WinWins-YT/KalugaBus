@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Core.Extensions;
 using KalugaBus.Models;
 
 namespace KalugaBus;
@@ -89,11 +90,8 @@ public partial class StopInfoPage : ContentPage
                 }
 
                 var calculatedTimes = await CalculateEstimatedTimes(_forecasts);
-                StopInfos.Clear();
-                foreach (var calculatedTime in calculatedTimes)
-                {
-                    StopInfos.Add(calculatedTime);
-                }
+                StopInfos = calculatedTimes.ToObservableCollection();
+                OnPropertyChanged(nameof(StopInfos));
             }
             catch (Exception ex)
             {

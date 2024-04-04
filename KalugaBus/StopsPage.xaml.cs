@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using CommunityToolkit.Maui.Core.Extensions;
 using KalugaBus.Models;
 using Location = Microsoft.Maui.Devices.Sensors.Location;
 
@@ -55,10 +56,8 @@ public partial class StopsPage : ContentPage
         try
         {
             var stops = await FetchData();
-            foreach (var stop in stops)
-            {
-                Stops.Add(stop);
-            }
+            Stops = stops.ToObservableCollection();
+            OnPropertyChanged(nameof(Stops));
         }
         catch (Exception ex)
         {
