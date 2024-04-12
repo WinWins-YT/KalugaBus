@@ -160,4 +160,9 @@ public partial class MainPage : IQueryAttributable
         (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
         _busPointProvider.ShowTrackId = Convert.ToInt64(query["TrackId"]);
     }
+
+    private async void AboutMenuItem_OnClicked(object? sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new AboutPage());
+    }
 }

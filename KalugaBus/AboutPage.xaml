@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="using:KalugaBus"
+             x:Class="KalugaBus.AboutPage">
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout x:DataType="local:AboutPage" Orientation="Vertical">
+                <Image Source="app_icon.png"
+                       HorizontalOptions="Center"
+                       Margin="10"
+                       WidthRequest="200"
+                       HeightRequest="200" />
+                <Label Text="{Binding AppName}"
+                       Padding="10"
+                       FontAttributes="Bold"
+                       FontSize="20"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
+                <Label Text="{Binding Version}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       Padding="10"/>
+                <Label Text="Автор: WinWins"
+                       Padding="10"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"/>
+                <Label Text="Приложение для отслеживания транспорта в Калуге. Данные взяты с https://bus40.su."
+                       Padding="10,10,10,0"/>
+                <Label Padding="10,10,10,0">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Исходники на " />
+                            <Span Text="GitHub"
+                                  TextColor="Blue"
+                                  TextDecorations="Underline">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer x:DataType="local:AboutPage" 
+                                                          Command="{Binding OpenLinkCommand}"
+                                                          CommandParameter="https://github.com/WinWins-YT/KalugaBus" />
+                                </Span.GestureRecognizers>
+                            </Span>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+                <Label Text="Политика конфиденциальности"
+                       TextColor="Blue"
+                       TextDecorations="Underline"
+                       Padding="10,10,10,0">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenLinkCommand}"
+                                              CommandParameter="https://danimatcorp.com/bus40/privacy.html" />
+                    </Label.GestureRecognizers>
+                </Label>
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

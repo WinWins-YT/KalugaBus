@@ -7,6 +7,13 @@
              Loaded="MainPage_OnLoaded"
              Title="Карта">
     
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="О приложении"
+                     Order="Secondary"
+                     x:Name="AboutMenuItem"
+                     Clicked="AboutMenuItem_OnClicked"/>
+    </ContentPage.ToolbarItems>
+    
     <maui:MapView x:Name="MapView"
                   RotationLock="True"
                   VerticalOptions="FillAndExpand"
