@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.ObjectModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Threading.Tasks;
-using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Core.Extensions;
 using KalugaBus.Models;
 
@@ -134,7 +127,7 @@ public partial class StopInfoPage : ContentPage
             if (forecast.AverageSpeed <= 0)
                 continue;
 
-            var time = Math.Round(length / forecast.AverageSpeed.Value * 60);
+            var time = Math.Round(length / (forecast.AverageSpeed.Value * 1.852) * 60);
             if (time > 60)
                 continue;
 
