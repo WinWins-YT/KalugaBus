@@ -20,12 +20,12 @@
              Route="RoutesPage">
             <ShellContent ContentTemplate="{DataTemplate local:RoutesPage}" />
         </Tab>
-        <Tab x:Name="StopsTab"
-             Title="Остановки"
-             Icon="bus_stop_icon.png"
-             Route="StopsPage">
-            <ShellContent ContentTemplate="{DataTemplate local:StopsPage}" />
-        </Tab>
+        <ShellContent x:Name="StopsTab"
+                      Title="Остановки"
+                      Icon="bus_stop_icon.png"
+                      Route="StopsPage">
+            <local:StopsPage />
+        </ShellContent>
     </TabBar>
 
     <!--<ShellContent
