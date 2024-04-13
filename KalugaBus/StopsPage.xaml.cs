@@ -14,7 +14,6 @@ public partial class StopsPage : ContentPage
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly Dictionary<Stop, HashSet<long>> _stationDict = new();
     private Location? _userLocation;
-    //private readonly AutoResetEvent _stationsLoadedEvent = new(false);
 
     public ObservableCollection<Stop> Stops { get; set; } = [];
     
@@ -28,8 +27,6 @@ public partial class StopsPage : ContentPage
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
-
-        //Task.Run(DownloadStations);
     }
 
     private async void StopsPage_OnLoaded(object? sender, EventArgs e)
@@ -85,16 +82,8 @@ public partial class StopsPage : ContentPage
         return status;
     }
 
-    private async Task DownloadStations()
-    {
-
-
-        //_stationsLoadedEvent.Set();
-    }
-
     private async Task<IEnumerable<Stop>> FetchData()
     {
-        //_stationsLoadedEvent.WaitOne();
         var trackStationsJson =
             await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_stations");
         var trackStations =
