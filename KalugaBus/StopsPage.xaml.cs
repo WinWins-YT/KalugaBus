@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using CommunityToolkit.Maui.Core.Extensions;
+using KalugaBus.Extensions;
 using KalugaBus.Models;
 using Location = Microsoft.Maui.Devices.Sensors.Location;
 
@@ -13,7 +14,7 @@ public partial class StopsPage : ContentPage
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly Dictionary<Stop, HashSet<long>> _stationDict = new();
     private Location? _userLocation;
-    private readonly AutoResetEvent _stationsLoadedEvent = new(false);
+    //private readonly AutoResetEvent _stationsLoadedEvent = new(false);
 
     public ObservableCollection<Stop> Stops { get; set; } = [];
     
@@ -28,7 +29,7 @@ public partial class StopsPage : ContentPage
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
 
-        Task.Run(DownloadStations);
+        //Task.Run(DownloadStations);
     }
 
     private async void StopsPage_OnLoaded(object? sender, EventArgs e)
@@ -46,7 +47,9 @@ public partial class StopsPage : ContentPage
         {
             try
             {
-                _userLocation = await Geolocation.GetLocationAsync();
+                _userLocation = await Geolocation.GetLastKnownLocationAsync();
+                if (_userLocation is (0, 0))
+                    _userLocation = await Geolocation.GetLocationAsync();
             }
             catch (FeatureNotEnabledException)
             {
@@ -84,6 +87,14 @@ public partial class StopsPage : ContentPage
 
     private async Task DownloadStations()
     {
+
+
+        //_stationsLoadedEvent.Set();
+    }
+
+    private async Task<IEnumerable<Stop>> FetchData()
+    {
+        //_stationsLoadedEvent.WaitOne();
         var trackStationsJson =
             await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_stations");
         var trackStations =
@@ -103,14 +114,6 @@ public partial class StopsPage : ContentPage
                 _stationDict.First(x => x.Key.Station.Name == station.Name).Value.Add(trackStation.Id);
             }
         }
-
-        _stationsLoadedEvent.Set();
-    }
-
-    private async Task<IEnumerable<Stop>> FetchData()
-    {
-        _stationsLoadedEvent.WaitOne();
-
         return _userLocation is not null ? await CalculateDistances(_stationDict.Keys) : _stationDict.Keys;
     }
 
