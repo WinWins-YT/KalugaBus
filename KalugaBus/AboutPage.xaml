@@ -26,8 +26,22 @@
                        Padding="10"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"/>
-                <Label Text="Приложение для отслеживания транспорта в Калуге. Данные взяты с https://bus40.su."
-                       Padding="10,10,10,0"/>
+                <Label Padding="10,10,10,0">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Приложение для отслеживания транспорта в Калуге. Данные взяты с " />
+                            <Span Text="https://bus40.su"
+                                  TextColor="Blue"
+                                  TextDecorations="Underline">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer x:DataType="local:AboutPage"
+                                                          Command="{Binding OpenLinkCommand}"
+                                                          CommandParameter="https://bus40.su" />
+                                </Span.GestureRecognizers>
+                            </Span>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
                 <Label Padding="10,10,10,0">
                     <Label.FormattedText>
                         <FormattedString>
