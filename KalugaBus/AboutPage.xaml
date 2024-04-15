@@ -39,6 +39,7 @@
                                                           CommandParameter="https://bus40.su" />
                                 </Span.GestureRecognizers>
                             </Span>
+                            <Span Text=". Данное приложение не связано с государственными органами и не несет ответственности за информацию, которую выводит." />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
