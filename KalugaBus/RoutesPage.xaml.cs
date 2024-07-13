@@ -70,15 +70,25 @@ public partial class RoutesPage : ContentPage
 
     private async Task<IEnumerable<RouteDevice>> LoadDevices()
     {
-        var tracksJson = await _httpClient.GetStringAsync("https://danimatcorp.com/bus40/tracks.json");
-        var outputList = JsonSerializer.Deserialize<List<RouteDevice>>(tracksJson, _jsonSerializerOptions) ??
-                         throw new InvalidOperationException("Wrong JSON was received from get_tracks.json");
+        try
+        {
+            var tracksJson = await _httpClient.GetStringAsync("https://danimatcorp.com/bus40/tracks.json");
+            var outputList = JsonSerializer.Deserialize<List<RouteDevice>>(tracksJson, _jsonSerializerOptions) ??
+                             throw new InvalidOperationException("Wrong JSON was received from get_tracks.json");
 
-        return outputList;
+            Preferences.Set("cached_tracks", JsonSerializer.Serialize(outputList, _jsonSerializerOptions));
+            return outputList;
+        }
+        catch (Exception)
+        {
+            var cachedTracks = Preferences.Get("cached_tracks", "");
+            if (cachedTracks == "")
+                throw;
+            
+            return JsonSerializer.Deserialize<List<RouteDevice>>(cachedTracks, _jsonSerializerOptions) ??
+                   throw new InvalidOperationException("Wrong JSON was saved in cached_tracks");
+        }
     }
-
-    [GeneratedRegex("<a href=\"#\" onclick=\"SetCurrentRoute\\(this, (\\d+)\\);\">(.{1,20})<\\/a>")]
-    private static partial Regex BusIndexRegex();
 
     private async void BusList_OnItemTapped(object? sender, ItemTappedEventArgs e)
     {
