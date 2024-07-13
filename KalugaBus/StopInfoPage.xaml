@@ -10,37 +10,53 @@
              Title="{Binding Stop.Station.Name}">
     
     <ContentPage.Content>
-        <ListView x:Name="BusStopList"
-                  RowHeight="{OnPlatform Android=80}"
-                  SelectionMode="None"
-                  ItemsSource="{Binding StopInfos}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <Grid Padding="10" x:DataType="models:StopInfo">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Label Grid.Row="0" Grid.Column="0"
-                                   Text="{Binding TrackName}"
-                                   FontAttributes="Bold" />
-                            <Label Grid.Row="1" Grid.Column="0"
-                                   Text="{Binding Direction}" />
-                            <Label Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                                   Text="{Binding EstimatedTime}"
-                                   HorizontalTextAlignment="End"
-                                   HorizontalOptions="End"
-                                   VerticalTextAlignment="Center"
-                                   VerticalOptions="Center" />
-                        </Grid>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <AbsoluteLayout>
+            <Label x:Name="NoBusesLabel"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   VerticalOptions="Center"
+                   VerticalTextAlignment="Center"
+                   AbsoluteLayout.LayoutFlags="All"
+                   AbsoluteLayout.LayoutBounds="0,0,1,1"
+                   FontAttributes="Bold"
+                   FontSize="20"
+                   TextColor="#666666"
+                   Text="Автобусов нет"
+                   IsVisible="False" />
+            <ListView x:Name="BusStopList"
+                      RowHeight="{OnPlatform Android=80}"
+                      AbsoluteLayout.LayoutBounds="0,0,1,1"
+                      AbsoluteLayout.LayoutFlags="All"
+                      SelectionMode="None"
+                      ItemsSource="{Binding StopInfos}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Grid Padding="10" x:DataType="models:StopInfo">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding TrackName}"
+                                       FontAttributes="Bold" />
+                                <Label Grid.Row="1" Grid.Column="0"
+                                       Text="{Binding Direction}" />
+                                <Label Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                                       Text="{Binding EstimatedTime}"
+                                       HorizontalTextAlignment="End"
+                                       HorizontalOptions="End"
+                                       VerticalTextAlignment="Center"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </AbsoluteLayout>
     </ContentPage.Content>
 </ContentPage>

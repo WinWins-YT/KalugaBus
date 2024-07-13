@@ -49,6 +49,10 @@ public partial class StopInfoPage : ContentPage
             {
                 StopInfos.Add(calculatedTime);
             }
+            if (StopInfos.Count == 0)
+            {
+                NoBusesLabel.IsVisible = true;
+            }
         }
         catch (Exception ex)
         {
@@ -84,6 +88,10 @@ public partial class StopInfoPage : ContentPage
 
                 var calculatedTimes = await CalculateEstimatedTimes(_forecasts);
                 StopInfos = calculatedTimes.ToObservableCollection();
+                if (StopInfos.Count == 0)
+                {
+                    NoBusesLabel.IsVisible = true;
+                }
                 OnPropertyChanged(nameof(StopInfos));
             }
             catch (Exception ex)
