@@ -4,6 +4,7 @@ using System.Text.Json;
 using CommunityToolkit.Maui.Core.Extensions;
 using KalugaBus.Extensions;
 using KalugaBus.Models;
+using Entry = Microsoft.Maui.Controls.PlatformConfiguration.TizenSpecific.Entry;
 using Location = Microsoft.Maui.Devices.Sensors.Location;
 
 namespace KalugaBus;
@@ -14,6 +15,7 @@ public partial class StopsPage : ContentPage
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly Dictionary<Stop, HashSet<long>> _stationDict = new();
     private Location? _userLocation;
+    private ReadOnlyCollection<Stop> _stops = new List<Stop>().AsReadOnly();
 
     public ObservableCollection<Stop> Stops { get; set; } = [];
     
@@ -59,7 +61,8 @@ public partial class StopsPage : ContentPage
         try
         {
             var stops = await FetchData();
-            Stops = stops.ToObservableCollection();
+            _stops = stops.ToList().AsReadOnly();
+            Stops = _stops.ToObservableCollection();
             OnPropertyChanged(nameof(Stops));
         }
         catch (Exception ex)
@@ -128,4 +131,33 @@ public partial class StopsPage : ContentPage
 
         await Navigation.PushAsync(new StopInfoPage(stop, _stationDict[stop].ToArray()));
     }
-}
+
+    private async void SortMenu_OnClicked(object? sender, EventArgs e)
+    {
+        var action = await DisplayActionSheet("Сортировка", "Отмена", null, "По расстоянию", "По названию");
+
+        Stops = action switch
+        {
+            "По расстоянию" => Stops.OrderBy(x => x.Distance).ToObservableCollection(),
+            "По названию" => Stops.OrderBy(x => x.Station.Name).ToObservableCollection(),
+            _ => Stops
+        };
+        OnPropertyChanged(nameof(Stops));
+    }
+
+    private void InputView_OnTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(e.NewTextValue))
+        {
+            Stops = _stops
+                .Where(x => x.Station.Name.ContainsMultiple(e.NewTextValue))
+                .ToObservableCollection();
+            OnPropertyChanged(nameof(Stops));
+        }
+        else
+        {
+            Stops = _stops.ToObservableCollection();
+            OnPropertyChanged(nameof(Stops));
+        }
+    }
+} 

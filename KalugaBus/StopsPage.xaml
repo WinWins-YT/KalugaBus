@@ -8,30 +8,42 @@
              Loaded="StopsPage_OnLoaded"
              Title="Остановки">
     
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Сортировка"
+                     Order="Primary"
+                     IconImageSource="sort_icon.png"
+                     Clicked="SortMenu_OnClicked"/>
+    </ContentPage.ToolbarItems>
+    
     <ContentPage.Content>
-        <ListView x:Name="StopsList"
-                  x:DataType="local:StopsPage"
-                  RowHeight="{OnPlatform Android=60}"
-                  SelectionMode="None"
-                  ItemsSource="{Binding Stops}"
-                  ItemTapped="StopsList_OnItemTapped">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <Grid Padding="10" x:DataType="models:Stop">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Label Grid.Row="0"
-                                   Text="{Binding Station.Name}"
-                                   FontAttributes="Bold"/>
-                            <Label Grid.Row="1"
-                                   Text="{Binding DistanceString}" />
-                        </Grid>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <StackLayout>
+            <Entry Placeholder="Поиск"
+                   Margin="10"
+                   TextChanged="InputView_OnTextChanged"/>
+            <ListView x:Name="StopsList"
+                      x:DataType="local:StopsPage"
+                      RowHeight="{OnPlatform Android=60}"
+                      SelectionMode="None"
+                      ItemsSource="{Binding Stops}"
+                      ItemTapped="StopsList_OnItemTapped">
+               <ListView.ItemTemplate>
+                   <DataTemplate>
+                       <ViewCell>
+                           <Grid Padding="10" x:DataType="models:Stop">
+                               <Grid.RowDefinitions>
+                                   <RowDefinition Height="Auto" />
+                                   <RowDefinition Height="Auto" />
+                               </Grid.RowDefinitions>
+                               <Label Grid.Row="0"
+                                      Text="{Binding Station.Name}"
+                                      FontAttributes="Bold"/>
+                               <Label Grid.Row="1"
+                                      Text="{Binding DistanceString}" />
+                           </Grid>
+                       </ViewCell>
+                   </DataTemplate>
+               </ListView.ItemTemplate>
+            </ListView> 
+        </StackLayout>
     </ContentPage.Content>
 </ContentPage>
