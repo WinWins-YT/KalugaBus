@@ -25,6 +25,8 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
     private readonly Dictionary<long, long> _incomingIds = new();
     private long _showTrackId = -1;
     private bool _showTrackIdSet;
+    private bool _showedError;
+    private bool _showedNoBuses;
 
     public long ShowTrackId
     {
@@ -34,6 +36,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             _showTrackId = value;
             _incomingIds.Clear();
             _showTrackIdSet = true;
+            _showedNoBuses = false;
             OnDataChanged();
         }
     }
@@ -66,11 +69,15 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             }
             catch (Exception ex)
             {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
+                if (!_showedError)
                 {
-                    var toast = Toast.Make($"Произошла ошибка:\n{ex.Message}", ToastDuration.Long);
-                    await toast.Show();
-                });
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        var toast = Toast.Make($"Произошла ошибка:\n{ex.Message}", ToastDuration.Long);
+                        await toast.Show();
+                    });
+                    _showedError = true;
+                }
             }
 
             foreach (var device in _devices.Where(device => !_previousPoints.ContainsKey(device.Id)))
@@ -104,10 +111,23 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         }
     }
 
-    public override Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
+    public override async Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
     {
         List<IFeature> points = [];
-        foreach (var device in _devices.Where(x => ShowTrackId == -1 || x.TrackId == ShowTrackId))
+        var devices = _devices.Where(x => ShowTrackId == -1 || x.TrackId == ShowTrackId).ToList();
+        if (devices.Count == 0)
+        {
+            if (!_showedNoBuses)
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    var toast = Toast.Make("Автобусов нет на линии", ToastDuration.Long);
+                    await toast.Show();
+                });
+                _showedNoBuses = true;
+            }
+        }
+        foreach (var device in devices)
         {
             if (_incomingIds.TryGetValue(device.Id, out var value) && value == device.IncomingId)
                 continue;
@@ -136,7 +156,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         }
         
         _showTrackIdSet = false;
-        return Task.FromResult(points.AsEnumerable());
+        return points.AsEnumerable();
     }
 
     void IDynamic.DataHasChanged()
