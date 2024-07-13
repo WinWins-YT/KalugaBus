@@ -9,6 +9,12 @@
              x:Name="ContentPage"
              Title="Маршруты">
     
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Отобразить избранное"
+                     IconImageSource="star_icon.png"
+                     Clicked="MenuItem_OnClicked" />
+    </ContentPage.ToolbarItems>
+    
     <ContentPage.Content>
         <ListView ItemsSource="{Binding Devices}" 
                   x:DataType="local:RoutesPage" 

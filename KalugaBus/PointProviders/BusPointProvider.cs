@@ -24,6 +24,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
     public List<TrackPolyline> TrackPolylines = [];
     private readonly Dictionary<long, long> _incomingIds = new();
     private long _showTrackId = -1;
+    private bool _showFavoured;
     private bool _showTrackIdSet;
     private bool _showedError;
     private bool _showedNoBuses;
@@ -37,6 +38,18 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             _incomingIds.Clear();
             _showTrackIdSet = true;
             _showedNoBuses = false;
+            ShowFavoured = false;
+            OnDataChanged();
+        }
+    }
+
+    public bool ShowFavoured
+    {
+        get => _showFavoured;
+        set
+        {
+            _showFavoured = value;
+            _incomingIds.Clear();
             OnDataChanged();
         }
     }
@@ -114,7 +127,33 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
     public override async Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
     {
         List<IFeature> points = [];
-        var devices = _devices.Where(x => ShowTrackId == -1 || x.TrackId == ShowTrackId).ToList();
+        List<Device> devices;
+        if (ShowFavoured)
+        {
+            var favouredTracksJson = Preferences.Get("favoured_tracks", "");
+            if (!string.IsNullOrEmpty(favouredTracksJson))
+            {
+                var favouredTracks =
+                    JsonSerializer.Deserialize<List<long>>(favouredTracksJson, _jsonSerializerOptions) ??
+                    throw new InvalidOperationException("Wrong JSON was received from favoured_tracks");
+                
+                devices = _devices.Where(x => favouredTracks.Contains(x.TrackId)).ToList();
+            }
+            else
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    var toast = Toast.Make("Список избранных маршрутов пуст", ToastDuration.Long);
+                    await toast.Show();
+                });
+                devices = _devices.Where(x => ShowTrackId == -1 || x.TrackId == ShowTrackId).ToList();
+                ShowFavoured = false;
+            }
+        }
+        else
+        {
+            devices = _devices.Where(x => ShowTrackId == -1 || x.TrackId == ShowTrackId).ToList();
+        }
         if (devices.Count == 0)
         {
             if (!_showedNoBuses)

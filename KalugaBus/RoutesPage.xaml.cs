@@ -120,4 +120,9 @@ public partial class RoutesPage : ContentPage
         var json = JsonSerializer.Serialize(_favouredTracks);
         Preferences.Set("favoured_tracks", json);
     }
+
+    private async void MenuItem_OnClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync($"///{nameof(MainPage)}?ShowFavoured=1");
+    }
 }

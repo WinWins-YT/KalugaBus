@@ -158,7 +158,15 @@ public partial class MainPage : IQueryAttributable
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
-        _busPointProvider.ShowTrackId = Convert.ToInt64(query["TrackId"]);
+        if (query.TryGetValue("TrackId", out var value))
+        {
+            _busPointProvider.ShowTrackId = Convert.ToInt64(value);
+        }
+
+        if (query.TryGetValue("ShowFavoured", out value))
+        {
+            _busPointProvider.ShowFavoured = value.ToString() == "1";
+        }
     }
 
     private async void AboutMenuItem_OnClicked(object? sender, EventArgs e)
