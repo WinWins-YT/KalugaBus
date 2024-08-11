@@ -8,6 +8,10 @@
              Title="Карта">
     
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Скрыть остановки"
+                     Order="Secondary"
+                     x:Name="ShowStationsItem"
+                     Clicked="ShowStationsItem_OnClicked"/>
         <ToolbarItem Text="О приложении"
                      Order="Secondary"
                      x:Name="AboutMenuItem"

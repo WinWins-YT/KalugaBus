@@ -218,4 +218,13 @@ public partial class MainPage : IQueryAttributable
     {
         await Navigation.PushAsync(new AboutPage());
     }
+
+    private void ShowStationsItem_OnClicked(object? sender, EventArgs e)
+    {
+        _stationPointProvider.ShowStations = !_stationPointProvider.ShowStations;
+        
+        ShowStationsItem.Text = _stationPointProvider.ShowStations
+            ? "Скрыть остановки"
+            : "Показать остановки";
+    }
 }

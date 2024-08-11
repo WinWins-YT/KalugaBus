@@ -20,6 +20,7 @@ public class StationPointProvider : MemoryProvider, IDynamic
     private readonly HttpClient _httpClient = new();
     
     private long _showTrackId = -1;
+    private bool _showStations = true;
     
     public long ShowTrackId
     {
@@ -27,6 +28,16 @@ public class StationPointProvider : MemoryProvider, IDynamic
         set
         {
             _showTrackId = value;
+            OnDataChanged();
+        }
+    }
+    
+    public bool ShowStations
+    {
+        get => _showStations;
+        set
+        {
+            _showStations = value;
             OnDataChanged();
         }
     }
@@ -59,6 +70,9 @@ public class StationPointProvider : MemoryProvider, IDynamic
 
     public override Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
     {
+        if (!_showStations)
+            return Task.FromResult(Array.Empty<IFeature>().AsEnumerable());
+        
         var features = new List<IFeature>();
         _stationDict.Clear();
 
