@@ -1,6 +1,10 @@
 ﻿using System.Diagnostics;
+using System.Text.Json;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
+using KalugaBus.Models;
 using KalugaBus.PointProviders;
-using KalugaBus.StyleRenders;
+using KalugaBus.StyleRenderers;
 using KalugaBus.Styles;
 using Mapsui;
 using Mapsui.Extensions;
@@ -20,7 +24,13 @@ public partial class MainPage : IQueryAttributable
 {
     private readonly BusPointProvider _busPointProvider = new();
     private readonly BusStyle _busStyle = new();
-    private readonly BusStyleRender _busStyleRender = new();
+    private readonly BusStyleRenderer _busStyleRenderer = new();
+
+    private readonly StationPointProvider _stationPointProvider = new();
+    private readonly StationStyle _stationStyle = new();
+    private readonly StationStyleRenderer _stationStyleRenderer = new();
+
+    private readonly MemoryLayer _stationsLayer = new();
     
     public MainPage()
     {
@@ -40,12 +50,21 @@ public partial class MainPage : IQueryAttributable
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
         
-        //MapView.Map.Layers.Add(CreatePointLayer());
+        _stationsLayer.Name = "Stations";
+        _stationsLayer.IsMapInfoLayer = true;
+        _stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
+        _stationPointProvider.DataChanged += async (_, _) =>
+        {
+            _stationsLayer.Features = await _stationPointProvider.GetFeaturesAsync(null!);
+        };
+        _stationPointProvider.DataHasChanged();
+        MapView.Map.Layers.Add(_stationsLayer);
+        
         MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
-            Name = "Points",
+            Name = "Buses",
             IsMapInfoLayer = true,
-            Style = new ThemeStyle(f => _busStyle)
+            Style = new ThemeStyle(_ => _busStyle)
         });
         
         MapView.Map.Widgets.Add(new ZoomInOutWidget
@@ -58,26 +77,51 @@ public partial class MainPage : IQueryAttributable
         });
         
         if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRender);
+            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRenderer);
+        
+        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(StationStyle)))
+            MapView.Renderer.StyleRenderers.Add(typeof(StationStyle), _stationStyleRenderer);
         
         MapView.Info += MapViewOnInfo;
         
         Task.Run(UpdateLocation);
     }
 
-    private void MapViewOnInfo(object? sender, MapInfoEventArgs e)
+    private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
     {
         var feature = e.MapInfo?.Feature;
-        if (feature is not PointFeature busPoint || busPoint["tag"]?.ToString() != "bus")
+        if (feature is null)
         {
-            (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
+            (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
             _busPointProvider.ShowTrackId = -1;
+            _stationPointProvider.ShowTrackId = -1;
             return;
         }
         
-        (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
-        
-        _busPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
+        switch (feature["tag"]?.ToString())
+        {
+            case "bus":
+                (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+                if (feature is not PointFeature busPoint)
+                    return;
+
+                _busPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
+                _stationPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
+                break;
+            
+            case "station":
+                if (feature["station"] is not Station station)
+                    return;
+                var stop = new Stop {Station = station};
+                await Navigation.PushAsync(new StopInfoPage(stop, stop.Station.TrackIds.ToArray()));
+                break;
+            
+            default:
+                (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+                _busPointProvider.ShowTrackId = -1;
+                _stationPointProvider.ShowTrackId = -1;
+                break;
+        }
     }
 
     private async Task UpdateLocation()
@@ -107,7 +151,7 @@ public partial class MainPage : IQueryAttributable
         
         while (true)
         {
-            Location? location = null;
+            Location? location;
             try
             {
                 location = await Geolocation.GetLocationAsync();
@@ -157,10 +201,11 @@ public partial class MainPage : IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        (MapView.Map.Layers[1] as AnimatedPointLayer)?.ClearCache();
+        (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
         if (query.TryGetValue("TrackId", out var value))
         {
             _busPointProvider.ShowTrackId = Convert.ToInt64(value);
+            _stationPointProvider.ShowTrackId = Convert.ToInt64(value);
         }
 
         if (query.TryGetValue("ShowFavoured", out value))

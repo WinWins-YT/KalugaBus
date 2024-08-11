@@ -9,9 +9,9 @@ using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using SkiaSharp;
 
-namespace KalugaBus.StyleRenders;
+namespace KalugaBus.StyleRenderers;
 
-public class BusStyleRender : ISkiaStyleRenderer
+public class BusStyleRenderer : ISkiaStyleRenderer
 {
     private readonly SKPaint _redPaint = new() { Color = new SKColor(255, 0, 0), IsAntialias = true };
     private readonly SKPaint _bluePaint = new() { Color = new SKColor(33, 70, 219), IsAntialias = true };
