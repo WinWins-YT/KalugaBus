@@ -29,8 +29,6 @@ public partial class MainPage : IQueryAttributable
     private readonly StationPointProvider _stationPointProvider = new();
     private readonly StationStyle _stationStyle = new();
     private readonly StationStyleRenderer _stationStyleRenderer = new();
-
-    private readonly MemoryLayer _stationsLayer = new();
     
     public MainPage()
     {
@@ -39,7 +37,7 @@ public partial class MainPage : IQueryAttributable
 
     private void MainPage_OnLoaded(object? sender, EventArgs e)
     {
-        if (MapView.Map.Layers.Any(x => x.Name == "Points"))
+        if (MapView.Map.Layers.Any(x => x.Name == "Buses"))
             return;
 
         MapView.Map.Home = map =>
@@ -49,16 +47,17 @@ public partial class MainPage : IQueryAttributable
         };
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
-        
-        _stationsLayer.Name = "Stations";
-        _stationsLayer.IsMapInfoLayer = true;
-        _stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
+
+        var stationsLayer = new MemoryLayer();
+        stationsLayer.Name = "Stations";
+        stationsLayer.IsMapInfoLayer = true;
+        stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
         _stationPointProvider.DataChanged += async (_, _) =>
         {
-            _stationsLayer.Features = await _stationPointProvider.GetFeaturesAsync(null!);
+            stationsLayer.Features = await _stationPointProvider.GetFeaturesAsync(null!);
         };
         _stationPointProvider.DataHasChanged();
-        MapView.Map.Layers.Add(_stationsLayer);
+        MapView.Map.Layers.Add(stationsLayer);
         
         MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
