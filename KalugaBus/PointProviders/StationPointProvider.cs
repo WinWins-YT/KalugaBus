@@ -28,7 +28,7 @@ public class StationPointProvider : MemoryProvider, IDynamic
         set
         {
             _showTrackId = value;
-            OnDataChanged();
+            DataHasChanged();
         }
     }
     
@@ -38,7 +38,7 @@ public class StationPointProvider : MemoryProvider, IDynamic
         set
         {
             _showStations = value;
-            OnDataChanged();
+            DataHasChanged();
         }
     }
 
@@ -57,6 +57,7 @@ public class StationPointProvider : MemoryProvider, IDynamic
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
             }) ?? [];
+            DataHasChanged();
         } 
         catch
         {
