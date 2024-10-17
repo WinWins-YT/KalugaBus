@@ -14,6 +14,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.x
+
+      - name: Restore workloads
+        run: dotnet workload restore
           
       - name: Build
         run: dotnet build KalugaBus/KalugaBus.csproj
@@ -28,6 +31,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.x
+          
+      - name: Restore workloads
+        run: dotnet workload restore
           
       - name: Getting keystore
         uses: timheuer/base64-to-file@v1.2
