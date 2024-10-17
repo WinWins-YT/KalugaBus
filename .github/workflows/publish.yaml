@@ -1,0 +1,51 @@
+on:
+  push:
+    branches: [ master ]
+    paths-ignore: [ '**.md' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.x
+          
+      - name: Build
+        run: dotnet build KalugaBus/KalugaBus.csproj
+        
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.x
+          
+      - name: Getting keystore
+        uses: timheuer/base64-to-file@v1.2
+        with:
+          fileName: 'KalugaBus.keystore'
+          encodedString: ${{ secrets.KEYSTORE_ENCODED }}
+      
+      - name: Publish
+        run: dotnet publish KalugaBus/KalugaBus.csproj -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASSWORD }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASSWORD }}
+        
+      - name: Archive APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.danimatcorp.kalugabus.apk
+          path: KalugaBus/bin/Release/net8.0-android/publish/com.danimatcorp.kalugabus-Signed.apk
+          
+      - name: Archive AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.danimatcorp.kalugabus.aab
+          path: KalugaBus/bin/Release/net8.0-android/publish/com.danimatcorp.kalugabus-Signed.aab
