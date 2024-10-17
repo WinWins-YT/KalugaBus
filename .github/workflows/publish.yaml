@@ -19,7 +19,7 @@ jobs:
         run: dotnet workload restore
           
       - name: Build
-        run: dotnet build KalugaBus/KalugaBus.csproj -f net8.0-android
+        run: dotnet build KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android
         
   publish:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
           encodedString: ${{ secrets.KEYSTORE_ENCODED }}
       
       - name: Publish
-        run: dotnet publish KalugaBus/KalugaBus.csproj -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASSWORD }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASSWORD }}
+        run: dotnet publish KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASSWORD }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASSWORD }}
         
       - name: Archive APK
         uses: actions/upload-artifact@v4
