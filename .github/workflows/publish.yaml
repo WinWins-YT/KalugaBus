@@ -17,6 +17,15 @@ jobs:
 
       - name: Restore workloads
         run: dotnet workload restore
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
           
       - name: Build
         run: dotnet build KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android
@@ -34,6 +43,15 @@ jobs:
           
       - name: Restore workloads
         run: dotnet workload restore
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
           
       - name: Getting keystore
         uses: timheuer/base64-to-file@v1.2
