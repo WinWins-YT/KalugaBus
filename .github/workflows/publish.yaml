@@ -19,7 +19,7 @@ jobs:
         run: dotnet workload restore
           
       - name: Build
-        run: dotnet build KalugaBus/KalugaBus.csproj
+        run: dotnet build KalugaBus/KalugaBus.csproj -f net8.0-android
         
   publish:
     runs-on: ubuntu-latest
