@@ -26,6 +26,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
           
       - name: Build
         run: dotnet build KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android
@@ -52,6 +54,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
           
       - name: Getting keystore
         uses: timheuer/base64-to-file@v1.2
@@ -60,7 +64,7 @@ jobs:
           encodedString: ${{ secrets.KEYSTORE_ENCODED }}
       
       - name: Publish
-        run: dotnet publish KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASSWORD }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASSWORD }}
+        run: dotnet publish KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASS }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASS }}
         
       - name: Archive APK
         uses: actions/upload-artifact@v4
