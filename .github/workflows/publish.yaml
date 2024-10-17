@@ -58,13 +58,14 @@ jobs:
           log-accepted-android-sdk-licenses: false
           
       - name: Getting keystore
+        id: get_keystore
         uses: timheuer/base64-to-file@v1.2
         with:
           fileName: 'KalugaBus.keystore'
           encodedString: ${{ secrets.KEYSTORE_ENCODED }}
       
       - name: Publish
-        run: dotnet publish KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=KalugaBus.keystore -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASS }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASS }}
+        run: dotnet publish KalugaBus/KalugaBus.csproj -p:TargetFrameworks=net8.0-android -f net8.0-android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=${{ steps.get_keystore.outputs.filePath }} -p:AndroidSigningKeyAlias=kalugabus -p:AndroidSigningKeyPass=${{ secrets.KEYSTORE_PASS }} -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASS }}
         
       - name: Archive APK
         uses: actions/upload-artifact@v4
