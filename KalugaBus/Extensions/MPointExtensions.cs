@@ -11,4 +11,6 @@ public static class MPointExtensions
         var result = Algorithms.RadiansToDegrees(Math.Atan2(point1.Y - point2.Y, point2.X - point1.X));
         return result < 0 ? 90.0 + result : result - 270;
     }
+    
+    public static bool IsEmpty(this MPoint point) => point is { X: 0, Y: 0 };
 }
