@@ -1,21 +1,23 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
-using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
-using KalugaBus.Models;
+﻿using KalugaBus.Models;
 using KalugaBus.PointProviders;
 using KalugaBus.StyleRenderers;
 using KalugaBus.Styles;
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
+using Mapsui.Nts;
+using Mapsui.Nts.Extensions;
 using Mapsui.Projections;
 using Mapsui.Rendering.Skia;
+using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
-using Mapsui.UI.Maui;
 using Mapsui.Widgets.Zoom;
+using NetTopologySuite.Geometries;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
+using Color = Mapsui.Styles.Color;
 using HorizontalAlignment = Mapsui.Widgets.HorizontalAlignment;
+using Location = Microsoft.Maui.Devices.Sensors.Location;
+using Position = Mapsui.UI.Maui.Position;
 using VerticalAlignment = Mapsui.Widgets.VerticalAlignment;
 
 namespace KalugaBus;
@@ -29,10 +31,27 @@ public partial class MainPage : IQueryAttributable
     private readonly StationPointProvider _stationPointProvider = new();
     private readonly StationStyle _stationStyle = new();
     private readonly StationStyleRenderer _stationStyleRenderer = new();
+
+    private readonly MemoryLayer _lineLayer = new();
+    private readonly VectorStyle _directLineStyle;
+    private readonly VectorStyle _backLineStyle;
     
     public MainPage()
     {
         InitializeComponent();
+
+        _directLineStyle = new VectorStyle
+        {
+            Fill = null,
+            Outline = null,
+            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 }
+        };
+        _backLineStyle = new VectorStyle
+        {
+            Fill = null,
+            Outline = null,
+            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 }
+        };
     }
 
     private void MainPage_OnLoaded(object? sender, EventArgs e)
@@ -58,6 +77,8 @@ public partial class MainPage : IQueryAttributable
         };
         _stationPointProvider.DataHasChanged();
         MapView.Map.Layers.Add(stationsLayer);
+        
+        MapView.Map.Layers.Add(_lineLayer);
         
         MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
@@ -91,21 +112,23 @@ public partial class MainPage : IQueryAttributable
         var feature = e.MapInfo?.Feature;
         if (feature is null)
         {
-            (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+            (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
             _busPointProvider.ShowTrackId = -1;
             _stationPointProvider.ShowTrackId = -1;
+            ClearBusRoute();
             return;
         }
         
         switch (feature["tag"]?.ToString())
         {
             case "bus":
-                (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+                (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
                 if (feature is not PointFeature busPoint)
                     return;
 
                 _busPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
                 _stationPointProvider.ShowTrackId = (long)(busPoint["track_id"] ?? -1);
+                ShowBusRoute((long)(busPoint["track_id"] ?? -1));
                 break;
             
             case "station":
@@ -116,7 +139,7 @@ public partial class MainPage : IQueryAttributable
                 break;
             
             default:
-                (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+                (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
                 _busPointProvider.ShowTrackId = -1;
                 _stationPointProvider.ShowTrackId = -1;
                 break;
@@ -200,11 +223,12 @@ public partial class MainPage : IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        (MapView.Map.Layers[2] as AnimatedPointLayer)?.ClearCache();
+        (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
         if (query.TryGetValue("TrackId", out var value))
         {
             _busPointProvider.ShowTrackId = Convert.ToInt64(value);
             _stationPointProvider.ShowTrackId = Convert.ToInt64(value);
+            ShowBusRoute(Convert.ToInt64(value));
         }
 
         if (query.TryGetValue("ShowFavoured", out value))
@@ -225,5 +249,41 @@ public partial class MainPage : IQueryAttributable
         ShowStationsItem.Text = _stationPointProvider.ShowStations
             ? "Скрыть остановки"
             : "Показать остановки";
+    }
+
+    private void ShowBusRoute(long id)
+    {
+        var trackPolyline = _busPointProvider.TrackPolylines.FirstOrDefault(x => x.Id == id);
+        if (trackPolyline is null)
+        {
+            ClearBusRoute();
+            return;
+        }
+
+        var directPoints = trackPolyline.Data.Direct.Select(x => SphericalMercator.FromLonLat(x[1], x[0]).ToCoordinate())
+            .ToArray();
+        var backPoints = trackPolyline.Data.Back.Select(x => SphericalMercator.FromLonLat(x[1], x[0]).ToCoordinate())
+            .ToArray();
+
+        var lineDirect = new LineString(directPoints);
+        var lineBack = new LineString(backPoints);
+
+        var directGeometry = new GeometryFeature(lineDirect)
+        {
+            Styles = [_directLineStyle]
+        };
+        var backGeometry = new GeometryFeature(lineBack)
+        {
+            Styles = [_backLineStyle]
+        };
+
+        _lineLayer.Features = [directGeometry, backGeometry];
+        _lineLayer.DataHasChanged();
+    }
+
+    private void ClearBusRoute()
+    {
+        _lineLayer.Features = Array.Empty<IFeature>();
+        _lineLayer.DataHasChanged();
     }
 }
