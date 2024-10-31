@@ -179,7 +179,9 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             
             var rotation = _showTrackIdSet
                 ? _previousRotations[device.Id]
-                : _previousPoints[device.Id].AngleTo(busFeature.Point);
+                : _previousPoints[device.Id].IsEmpty() 
+                    ? busFeature.Point.AngleTo(device.GetLastStopLocation(TrackPolylines)) 
+                    : _previousPoints[device.Id].AngleTo(busFeature.Point);
             
             busFeature["number"] = device.TrackName is "6" or "9" ? device.TrackName + "." : device.TrackName;
             busFeature["tag"] = "bus";
