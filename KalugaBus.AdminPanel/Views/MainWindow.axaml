@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
+        xmlns:vm="clr-namespace:KalugaBus.AdminPanel.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="KalugaBus.AdminPanel.Views.MainWindow"
+        Title="Admin panel" MinWidth="800" MinHeight="450"
+        Loaded="MainWindow_OnLoaded" x:DataType="vm:MainWindowViewModel">
+    
+    <TabControl Margin="0,0,0,10">
+        <TabItem Header="Point editor">
+            <Grid RowDefinitions="Auto,*">
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10">
+                    <Label Content="Select route: " VerticalAlignment="Center" />
+                    <ComboBox x:Name="PointRouteComboBox" 
+                              PlaceholderText="Loading..." 
+                              IsEnabled="False" 
+                              SelectedIndex="{Binding PointSelectedRouteIndex}" />
+                </StackPanel>
+                <mapsui:MapControl Grid.Row="1" x:Name="PointMapView" />
+            </Grid>
+        </TabItem>
+        <TabItem Header="Route editor">
+            
+        </TabItem>
+        <TabItem Header="Stops editor">
+            
+        </TabItem>
+    </TabControl>
+</Window>
