@@ -11,7 +11,10 @@ namespace KalugaBus;
 
 public partial class RoutesPage : ContentPage
 {
-    private readonly HttpClient _httpClient = new();
+    private readonly HttpClient _httpClient = new()
+    {
+        Timeout = new TimeSpan(0, 0, 2)
+    };
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly List<long> _favouredTracks = [];
     private bool _favouritesChanged;
@@ -76,14 +79,18 @@ public partial class RoutesPage : ContentPage
             var outputList = JsonSerializer.Deserialize<List<RouteDevice>>(tracksJson, _jsonSerializerOptions) ??
                              throw new InvalidOperationException("Wrong JSON was received from get_tracks.json");
 
-            Preferences.Set("cached_tracks", JsonSerializer.Serialize(outputList, _jsonSerializerOptions));
+            var cachedTracksFilePath = Path.Combine(FileSystem.Current.CacheDirectory, "cached_tracks.json");
+            await File.WriteAllTextAsync(cachedTracksFilePath, tracksJson);
+            
             return outputList;
         }
         catch (Exception)
         {
-            var cachedTracks = Preferences.Get("cached_tracks", "");
-            if (cachedTracks == "")
+            var cachedTracksFilePath = Path.Combine(FileSystem.Current.CacheDirectory, "cached_tracks.json");
+            if (!File.Exists(cachedTracksFilePath))
                 throw;
+
+            var cachedTracks = await File.ReadAllTextAsync(cachedTracksFilePath);
             
             return JsonSerializer.Deserialize<List<RouteDevice>>(cachedTracks, _jsonSerializerOptions) ??
                    throw new InvalidOperationException("Wrong JSON was saved in cached_tracks");
