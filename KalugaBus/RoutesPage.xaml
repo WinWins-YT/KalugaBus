@@ -19,7 +19,7 @@
         <ListView ItemsSource="{Binding Devices}" 
                   x:DataType="local:RoutesPage" 
                   SelectionMode="None"
-                  RowHeight="{OnPlatform Android=60}"
+                  HasUnevenRows="True"
                   x:Name="BusList"
                   ItemTapped="BusList_OnItemTapped">
             <ListView.ItemTemplate>

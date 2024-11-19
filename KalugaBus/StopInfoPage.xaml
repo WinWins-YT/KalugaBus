@@ -24,7 +24,7 @@
                    Text="Автобусов нет"
                    IsVisible="False" />
             <ListView x:Name="BusStopList"
-                      RowHeight="{OnPlatform Android=80}"
+                      HasUnevenRows="True"
                       AbsoluteLayout.LayoutBounds="0,0,1,1"
                       AbsoluteLayout.LayoutFlags="All"
                       SelectionMode="None"
