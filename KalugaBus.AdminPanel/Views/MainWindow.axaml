@@ -17,7 +17,8 @@
                     <ComboBox x:Name="PointRouteComboBox" 
                               PlaceholderText="Loading..." 
                               IsEnabled="False" 
-                              SelectedIndex="{Binding PointSelectedRouteIndex}" />
+                              SelectedIndex="{Binding PointSelectedRouteIndex}"
+                              SelectionChanged="PointRouteComboBox_OnSelectionChanged"/>
                 </StackPanel>
                 <mapsui:MapControl Grid.Row="1" x:Name="PointMapView" />
             </Grid>

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -8,17 +7,25 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using KalugaBus.AdminPanel.Models;
 using KalugaBus.AdminPanel.Services;
 using KalugaBus.AdminPanel.ViewModels;
 using Mapsui.Extensions;
+using Mapsui.Layers;
+using Mapsui.Nts;
+using Mapsui.Nts.Editing;
+using Mapsui.Nts.Extensions;
+using Mapsui.Nts.Layers;
+using Mapsui.Nts.Widgets;
 using Mapsui.Projections;
+using Mapsui.Styles;
+using Mapsui.Styles.Thematics;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using NetTopologySuite.Geometries;
 
 namespace KalugaBus.AdminPanel.Views;
 
@@ -29,6 +36,12 @@ public partial class MainWindow : Window
     private readonly HttpClient _httpClient = new();
     private readonly OptionsService<Settings> _settings;
     private List<TrackPolyline> _trackPolylines = [];
+
+    private readonly VectorStyle _directLineStyle;
+    private readonly VectorStyle _backLineStyle;
+
+    private EditManager _pointEditManager = new();
+    private WritableLayer _pointLayer = new();
     
     public MainWindow(OptionsService<Settings> options)
     {
@@ -39,11 +52,26 @@ public partial class MainWindow : Window
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
         _settings = options;
+        
+        _directLineStyle = new VectorStyle
+        {
+            Fill = null,
+            Outline = null,
+            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 },
+            MaxVisible = 30
+        };
+        _backLineStyle = new VectorStyle
+        {
+            Fill = null,
+            Outline = null,
+            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 },
+            MaxVisible = 30
+        };
     }
     
     public MainWindow() : this(new OptionsService<Settings>()) { }
 
-    private void MainWindow_OnLoaded(object? sender, RoutedEventArgs e)
+    private async void MainWindow_OnLoaded(object? sender, RoutedEventArgs e)
     {
         PointMapView.Map.Home = map =>
         {
@@ -53,11 +81,25 @@ public partial class MainWindow : Window
         
         PointMapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
 
-        Task.Run(async () =>
+        _pointLayer = new WritableLayer
         {
-            await LoadRoutes();
-            await LoadTracks();
-        });
+            Name = "EditPoints",
+            Style = CreateEditLayerStyle(),
+            IsMapInfoLayer = true
+        };
+        PointMapView.Map.Layers.Add(_pointLayer);
+
+        _pointEditManager = new EditManager
+        {
+            Layer = (WritableLayer)PointMapView.Map.Layers.First(x => x.Name == "EditPoints"),
+            EditMode = EditMode.Modify
+        };
+        
+        PointMapView.Map.Widgets.Add(new EditingWidget(PointMapView, _pointEditManager, new EditManipulation()));
+        PointMapView.Map.Layers.Add(new VertexOnlyLayer(_pointLayer) { Name = "VertexLayer" });
+
+        await LoadRoutes();
+        await LoadTracks();
     }
 
     private async Task LoadRoutes()
@@ -72,7 +114,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Dispatcher.UIThread.Post(async () =>
+            Dispatcher.UIThread.Post(() =>
             {
                 var msg = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                 {
@@ -81,9 +123,8 @@ public partial class MainWindow : Window
                     ButtonDefinitions = ButtonEnum.Ok,
                     Icon = MsBox.Avalonia.Enums.Icon.Error
                 });
-                await msg.ShowAsPopupAsync(this);
+                msg.ShowAsPopupAsync(this);
             });
-            
         }
     }
 
@@ -96,9 +137,10 @@ public partial class MainWindow : Window
             var routeDevices = JsonSerializer.Deserialize<List<RouteDevice>>(json, _jsonSerializerOptions) ??
                              throw new InvalidOperationException("Wrong JSON in tracks.json");
             
-            var pointsComboBoxItems = routeDevices.Select(x => $"{x.TrackId} - {x.Name}").ToList();
             Dispatcher.UIThread.Post(() =>
             {
+                var pointsComboBoxItems = routeDevices
+                    .Select(x => new ComboBoxItem { Content = $"{x.TrackId} - {x.Name}", Tag = x.TrackId }).ToList();
                 PointRouteComboBox.ItemsSource = pointsComboBoxItems;
                 PointRouteComboBox.SelectedIndex = 0;
                 PointRouteComboBox.IsEnabled = true;
@@ -106,9 +148,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            var pointsComboBoxItems = _trackPolylines.Select(x => $"ID {x.Id}").ToList();
-            Dispatcher.UIThread.Post(async () =>
+            Dispatcher.UIThread.Post(() =>
             {
+                var pointsComboBoxItems = _trackPolylines
+                    .Select(x => new ComboBoxItem { Content = $"ID {x.Id}", Tag = x.Id}).ToList();
                 PointRouteComboBox.ItemsSource = pointsComboBoxItems;
                 PointRouteComboBox.SelectedIndex = 0;
                 PointRouteComboBox.IsEnabled = true;
@@ -120,8 +163,78 @@ public partial class MainWindow : Window
                     ButtonDefinitions = ButtonEnum.Ok,
                     Icon = MsBox.Avalonia.Enums.Icon.Warning
                 });
-                await msg.ShowAsPopupAsync(this);
+                msg.ShowAsPopupAsync(this);
             });
         }
     }
+
+    private void PointRouteComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (PointRouteComboBox.SelectedItem is not ComboBoxItem selectedItem)
+            return;
+        
+        var trackId = (long)selectedItem.Tag!;
+        var track = _trackPolylines.First(x => x.Id == trackId);
+        
+        var directPoints = track.Data.Direct
+            .Select(x => SphericalMercator.FromLonLat(x[1], x[0]).ToCoordinate()).ToArray();
+        var backPoints = track.Data.Back
+            .Select(x => SphericalMercator.FromLonLat(x[1], x[0]).ToCoordinate()).ToArray();
+        
+        var lineDirect = new LineString(directPoints);
+        var lineBack = new LineString(backPoints);
+        
+        var directGeometry = new GeometryFeature(lineDirect)
+        {
+            Styles = [_directLineStyle]
+        };
+        var backGeometry = new GeometryFeature(lineBack)
+        {
+            Styles = [_backLineStyle]
+        };
+        
+        _pointLayer.Clear();
+        _pointLayer.AddRange([directGeometry, backGeometry]);
+        _pointLayer.DataHasChanged();
+    }
+
+    #region Styles
+
+    private StyleCollection CreateEditLayerStyle() => new()
+    {
+        Styles =
+        {
+            CreateEditLayerBasicStyle(),
+            CreateSelectedStyle(),
+            CreateStyleToShowTheVertices(),
+        }
+    };
+
+    private SymbolStyle CreateStyleToShowTheVertices() => new() { SymbolScale = 0.5 };
+
+    private VectorStyle CreateEditLayerBasicStyle() => new()
+    {
+        Fill = new Brush(_editModeColor),
+        Line = new Pen(_editModeColor, 3),
+        Outline = new Pen(_editModeColor, 3)
+    };
+
+    private readonly Color _editModeColor = new(124, 22, 111, 180);
+    private readonly Color _pointLayerColor = new(240, 240, 240, 240);
+    private readonly Color _lineLayerColor = new(150, 150, 150, 240);
+    private readonly Color _polygonLayerColor = new(20, 20, 20, 240);
+
+    private readonly SymbolStyle? _selectedStyle = new()
+    {
+        Fill = null,
+        Outline = new Pen(Color.Red, 3),
+        Line = new Pen(Color.Red, 3)
+    };
+
+    private readonly SymbolStyle? _disableStyle = new() { Enabled = false };
+    
+    private ThemeStyle CreateSelectedStyle()
+        => new(f => (bool?)f["Selected"] == true ? _selectedStyle : _disableStyle);
+
+    #endregion
 }
