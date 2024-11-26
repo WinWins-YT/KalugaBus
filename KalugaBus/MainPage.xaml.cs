@@ -44,13 +44,15 @@ public partial class MainPage : IQueryAttributable
         {
             Fill = null,
             Outline = null,
-            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 }
+            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 },
+            MaxVisible = 30
         };
         _backLineStyle = new VectorStyle
         {
             Fill = null,
             Outline = null,
-            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 }
+            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 },
+            MaxVisible = 30
         };
     }
 
