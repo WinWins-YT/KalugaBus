@@ -38,7 +38,7 @@ public class StationStyleRenderer : ISkiaStyleRenderer
     
     private static SKPicture GetPicture(string embeddedResourcePath)
     {
-        var stream = AssetLoader.Open(new Uri("/Assets/bus_stop.svg"));
+        var stream = AssetLoader.Open(new Uri("avares://KalugaBus.AdminPanel/Assets/bus_stop.svg"));
         return stream.LoadSvgPicture();
     }
 }

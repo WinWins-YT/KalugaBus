@@ -67,7 +67,7 @@
                               PlaceholderText="Loading..." 
                               IsEnabled="False" 
                               SelectedIndex="{Binding PointSelectedRouteIndex}"
-                              SelectionChanged="PointRouteComboBox_OnSelectionChanged"/>
+                              SelectionChanged="StopsRouteComboBox_OnSelectionChanged"/>
                 </StackPanel>
                 <mapsui:MapControl Grid.Row="1" x:Name="StopsMapView" />
             </Grid>

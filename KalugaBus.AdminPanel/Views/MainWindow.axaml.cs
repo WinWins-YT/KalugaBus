@@ -11,7 +11,10 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using KalugaBus.AdminPanel.Models;
 using KalugaBus.AdminPanel.Services;
+using KalugaBus.AdminPanel.StyleRenderers;
 using KalugaBus.AdminPanel.ViewModels;
+using KalugaBus.Styles;
+using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Nts;
@@ -20,6 +23,7 @@ using Mapsui.Nts.Extensions;
 using Mapsui.Nts.Layers;
 using Mapsui.Nts.Widgets;
 using Mapsui.Projections;
+using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using MsBox.Avalonia;
@@ -37,6 +41,10 @@ public partial class MainWindow : Window
     private readonly OptionsService<Settings> _settings;
     private List<TrackPolyline> _trackPolylines = [];
     private List<RouteDevice> _routeDevices = [];
+    private List<TrackStations> _trackStations = [];
+    
+    private readonly StationStyle _stationStyle = new();
+    private readonly StationStyleRenderer _stationStyleRenderer = new();
 
     private readonly VectorStyle _directLineStyle;
     private readonly VectorStyle _backLineStyle;
@@ -89,6 +97,9 @@ public partial class MainWindow : Window
         };
         
         StopsMapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
+        
+        if (StopsMapView.Renderer is MapRenderer && !StopsMapView.Renderer.StyleRenderers.ContainsKey(typeof(StationStyle)))
+            StopsMapView.Renderer.StyleRenderers.Add(typeof(StationStyle), _stationStyleRenderer);
 
         _pointLayer = new WritableLayer
         {
@@ -106,7 +117,14 @@ public partial class MainWindow : Window
         
         PointMapView.Map.Widgets.Add(new EditingWidget(PointMapView, _pointEditManager, new EditManipulation()));
         PointMapView.Map.Layers.Add(new VertexOnlyLayer(_pointLayer) { Name = "VertexLayer" });
-
+        
+        var stationsLayer = new MemoryLayer();
+        stationsLayer.Name = "Stations";
+        stationsLayer.IsMapInfoLayer = true;
+        stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
+        StopsMapView.Map.Layers.Add(stationsLayer);
+        
+        await LoadStops();
         await LoadRoutes();
         await LoadTracks();
     }
@@ -192,6 +210,32 @@ public partial class MainWindow : Window
             });
         }
     }
+    
+    private async Task LoadStops()
+    {
+        try
+        {
+            var trackPolylineJson =
+                await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_stations");
+            _trackStations =
+                JsonSerializer.Deserialize<List<TrackStations>>(trackPolylineJson, _jsonSerializerOptions) ??
+                throw new InvalidOperationException("Wrong JSON was received from get_polylines");
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                var msg = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
+                {
+                    ContentTitle = "Error occurred",
+                    ContentMessage = "Unable to get polylines\n" + ex,
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    Icon = MsBox.Avalonia.Enums.Icon.Error
+                });
+                msg.ShowAsPopupAsync(this);
+            });
+        }
+    }
 
     private void PointRouteComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -262,4 +306,30 @@ public partial class MainWindow : Window
         => new(f => (bool?)f["Selected"] == true ? _selectedStyle : _disableStyle);
 
     #endregion
+
+    private void StopsRouteComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (StopsRouteComboBox.SelectedItem is not ComboBoxItem selectedItem)
+            return;
+        
+        var trackId = (long)selectedItem.Tag!;
+        var track = _trackStations.First(x => x.Id == trackId);
+        var stops = track.Stations;
+        
+        var features = new List<IFeature>();
+        foreach (var station in stops)
+        {
+            var feature = new PointFeature(SphericalMercator
+                .FromLonLat(station.Longitude, station.Latitude).ToMPoint());
+
+            feature["tag"] = "station";
+            feature["ID"] = station.Id;
+            feature["station"] = station;
+
+            features.Add(feature);
+        }
+        
+        var layer = (MemoryLayer)StopsMapView.Map.Layers.First(x => x.Name == "Stations");
+        layer.Features = features;
+    }
 }
