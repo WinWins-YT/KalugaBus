@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private readonly HttpClient _httpClient = new();
     private readonly OptionsService<Settings> _settings;
     private List<TrackPolyline> _trackPolylines = [];
+    private List<RouteDevice> _routeDevices = [];
 
     private readonly VectorStyle _directLineStyle;
     private readonly VectorStyle _backLineStyle;
@@ -80,6 +81,14 @@ public partial class MainWindow : Window
         };
         
         PointMapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
+        
+        StopsMapView.Map.Home = map =>
+        {
+            var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
+            map.CenterOnAndZoomTo(point, 15);
+        };
+        
+        StopsMapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
 
         _pointLayer = new WritableLayer
         {
@@ -134,16 +143,28 @@ public partial class MainWindow : Window
         if (File.Exists(filePath))
         {
             var json = await File.ReadAllTextAsync(filePath);
-            var routeDevices = JsonSerializer.Deserialize<List<RouteDevice>>(json, _jsonSerializerOptions) ??
+            _routeDevices = JsonSerializer.Deserialize<List<RouteDevice>>(json, _jsonSerializerOptions) ??
                              throw new InvalidOperationException("Wrong JSON in tracks.json");
+
+            _routeDevices = _routeDevices.Select(x =>
+            {
+                x.ImageUrl = "avares://KalugaBus.AdminPanel/Assets/" + x.ImageUrl;
+                return x;
+            }).ToList();
             
             Dispatcher.UIThread.Post(() =>
             {
-                var pointsComboBoxItems = routeDevices
+                var pointsComboBoxItems = _routeDevices
                     .Select(x => new ComboBoxItem { Content = $"{x.TrackId} - {x.Name}", Tag = x.TrackId }).ToList();
                 PointRouteComboBox.ItemsSource = pointsComboBoxItems;
                 PointRouteComboBox.SelectedIndex = 0;
                 PointRouteComboBox.IsEnabled = true;
+                
+                StopsRouteComboBox.ItemsSource = pointsComboBoxItems;
+                StopsRouteComboBox.SelectedIndex = 0;
+                StopsRouteComboBox.IsEnabled = true;
+
+                RouteListBox.ItemsSource = _routeDevices;
             });
         }
         else
@@ -155,6 +176,10 @@ public partial class MainWindow : Window
                 PointRouteComboBox.ItemsSource = pointsComboBoxItems;
                 PointRouteComboBox.SelectedIndex = 0;
                 PointRouteComboBox.IsEnabled = true;
+                
+                StopsRouteComboBox.ItemsSource = pointsComboBoxItems;
+                StopsRouteComboBox.SelectedIndex = 0;
+                StopsRouteComboBox.IsEnabled = true;
                 
                 var msg = MessageBoxManager.GetMessageBoxStandard(new MessageBoxStandardParams
                 {
