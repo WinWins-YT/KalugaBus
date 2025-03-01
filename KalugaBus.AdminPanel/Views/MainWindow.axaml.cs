@@ -7,13 +7,14 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using KalugaBus.AdminPanel.Models;
 using KalugaBus.AdminPanel.Services;
 using KalugaBus.AdminPanel.StyleRenderers;
 using KalugaBus.AdminPanel.ViewModels;
-using KalugaBus.Styles;
+using KalugaBus.AdminPanel.Styles;
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
@@ -26,6 +27,7 @@ using Mapsui.Projections;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
+using Mapsui.UI.Avalonia.Extensions;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
     private List<TrackPolyline> _trackPolylines = [];
     private List<RouteDevice> _routeDevices = [];
     private List<TrackStations> _trackStations = [];
+    private readonly List<Station> _stations = new();
     
     private readonly StationStyle _stationStyle = new();
     private readonly StationStyleRenderer _stationStyleRenderer = new();
@@ -51,6 +54,8 @@ public partial class MainWindow : Window
 
     private EditManager _pointEditManager = new();
     private WritableLayer _pointLayer = new();
+
+    private bool _stopEditing = false;
     
     public MainWindow(OptionsService<Settings> options)
     {
@@ -215,11 +220,21 @@ public partial class MainWindow : Window
     {
         try
         {
-            var trackPolylineJson =
+            var trackStationsJson =
                 await _httpClient.GetStringAsync("https://bus40.su/default.aspx?target=main&action=get_stations");
             _trackStations =
-                JsonSerializer.Deserialize<List<TrackStations>>(trackPolylineJson, _jsonSerializerOptions) ??
+                JsonSerializer.Deserialize<List<TrackStations>>(trackStationsJson, _jsonSerializerOptions) ??
                 throw new InvalidOperationException("Wrong JSON was received from get_polylines");
+            foreach (var trackStation in _trackStations)
+            {
+                foreach (var station in trackStation.Stations.DistinctBy(x => x.Id))
+                {
+                    if (_stations.All(x => x.Name != station.Name))
+                        _stations.Add(station);
+
+                    _stations.First(x => x.Name == station.Name).TrackIds.Add(trackStation.Id);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -317,19 +332,96 @@ public partial class MainWindow : Window
         var stops = track.Stations;
         
         var features = new List<IFeature>();
+        var ids = new List<long>();
         foreach (var station in stops)
         {
+            if (ids.Contains(station.Id))
+                continue;
             var feature = new PointFeature(SphericalMercator
                 .FromLonLat(station.Longitude, station.Latitude).ToMPoint());
 
             feature["tag"] = "station";
             feature["ID"] = station.Id;
-            feature["station"] = station;
+            feature["station"] = _stations.First(x => x.Name == station.Name);
+            feature["editing"] = false;
 
+            ids.Add(station.Id);
             features.Add(feature);
         }
         
         var layer = (MemoryLayer)StopsMapView.Map.Layers.First(x => x.Name == "Stations");
         layer.Features = features;
+    }
+
+    private void StopsMapView_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(sender as Control);
+        if (point.Properties.IsRightButtonPressed)
+        {
+            if (_stopEditing) return;
+            var location = point.Position.ToMapsui();
+            var mapInfo = StopsMapView.GetMapInfo(location);
+            if (mapInfo?.Feature == null)
+                return;
+    
+            var layer = (MemoryLayer)StopsMapView.Map.Layers.First(x => x.Name == "Stations");
+            var stop = layer.Features.First(x => x["ID"] == mapInfo.Feature["ID"]);
+            stop["editing"] = true;
+            _stopEditing = true;
+            StopsMapView.Refresh();
+        }
+        else if (point.Properties.IsLeftButtonPressed)
+        {
+            var mapInfo = StopsMapView.GetMapInfo(point.Position.ToMapsui());
+
+            if (_stopEditing)
+            {
+                var viewport = StopsMapView.Map.Navigator.Viewport;
+                var location = viewport.ScreenToWorld(point.Position.ToMapsui());
+
+                var layer = (MemoryLayer)StopsMapView.Map.Layers.First(x => x.Name == "Stations");
+                var features = layer.Features.ToList();
+                for (var i = 0; i < features.Count; i++)
+                {
+                    if (!(bool)(features[i]["editing"] ?? false))
+                        continue;
+
+                    var newStop = new PointFeature(location);
+                    newStop["tag"] = "station";
+                    newStop["ID"] = features[i]["ID"];
+                    newStop["station"] = features[i]["station"];
+                    newStop["editing"] = false;
+
+                    features[i] = newStop;
+                }
+
+                layer.Features = features;
+                _stopEditing = false;
+                StopsMapView.Refresh();
+            }
+            else
+            {
+                if (mapInfo?.Feature == null)
+                    return;
+
+                var station = mapInfo.Feature["station"] as Station ?? throw new InvalidOperationException();
+                var stopEdit = new StopEdit(station, _routeDevices.Where(x => station.TrackIds.Contains(x.TrackId)));
+                stopEdit.ShowDialog(this);
+            }
+        }
+        
+        e.Handled = true;
+    }
+
+    private void StopsMapView_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || !_stopEditing) 
+            return;
+        
+        var layer = (MemoryLayer)StopsMapView.Map.Layers.First(x => x.Name == "Stations");
+        var stop = layer.Features.First(x => (bool)(x["editing"] ?? false));
+        stop["editing"] = false;
+        _stopEditing = false;
+        StopsMapView.Refresh();
     }
 }

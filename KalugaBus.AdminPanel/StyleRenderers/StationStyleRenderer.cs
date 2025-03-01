@@ -24,7 +24,11 @@ public class StationStyleRenderer : ISkiaStyleRenderer
         var worldPoint = pointFeature.Point;
         var screenPoint = viewport.WorldToScreen(worldPoint);
         
-        var fillBrush = new SKPaint { Color = new SKColor(48, 148, 219), IsAntialias = true };
+        var editing = (bool)(pointFeature["editing"] ?? false);
+        var fillBrush = editing ? 
+            //new SKPaint { Color = new SKColor(235, 66, 54), IsAntialias = true } : 
+            new SKPaint { ColorFilter = SKColorFilter.CreateBlendMode(new SKColor(235, 66, 54), SKBlendMode.SrcIn) } :
+            new SKPaint { ColorFilter = SKColorFilter.CreateBlendMode(new SKColor(48, 148, 219), SKBlendMode.SrcIn) };
         var radius = (float)Math.Clamp(2 / viewport.Resolution, 0.8, float.MaxValue) * 1.2f;
         
         canvas.Save();

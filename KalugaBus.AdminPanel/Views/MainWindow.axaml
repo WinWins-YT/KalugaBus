@@ -8,7 +8,8 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="KalugaBus.AdminPanel.Views.MainWindow"
         Title="Admin panel" MinWidth="800" MinHeight="450"
-        Loaded="MainWindow_OnLoaded" x:DataType="vm:MainWindowViewModel">
+        Loaded="MainWindow_OnLoaded" x:DataType="vm:MainWindowViewModel"
+        KeyDown="StopsMapView_OnKeyDown">
     
     <TabControl Margin="0,0,0,10">
         <TabItem Header="Point editor">
@@ -69,7 +70,7 @@
                               SelectedIndex="{Binding PointSelectedRouteIndex}"
                               SelectionChanged="StopsRouteComboBox_OnSelectionChanged"/>
                 </StackPanel>
-                <mapsui:MapControl Grid.Row="1" x:Name="StopsMapView" />
+                <mapsui:MapControl Grid.Row="1" x:Name="StopsMapView" PointerPressed="StopsMapView_OnPointerPressed" />
             </Grid>
         </TabItem>
     </TabControl>

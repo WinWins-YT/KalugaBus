@@ -1,6 +1,6 @@
 ﻿using Mapsui.Styles;
 
-namespace KalugaBus.Styles;
+namespace KalugaBus.AdminPanel.Styles;
 
 public class StationStyle : IStyle
 {
