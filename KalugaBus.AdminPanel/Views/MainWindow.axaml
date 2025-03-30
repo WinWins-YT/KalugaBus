@@ -27,7 +27,8 @@
         </TabItem>
         <TabItem Header="Route editor">
             <ListBox x:Name="RouteListBox"
-                     SelectionMode="Single">
+                     SelectionMode="Single"
+                     SelectionChanged="RouteListBox_OnSelectionChanged">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid x:DataType="models:RouteDevice">

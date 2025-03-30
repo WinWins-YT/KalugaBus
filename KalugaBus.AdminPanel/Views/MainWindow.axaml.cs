@@ -424,4 +424,13 @@ public partial class MainWindow : Window
         _stopEditing = false;
         StopsMapView.Refresh();
     }
+
+    private void RouteListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (RouteListBox.SelectedItem is not RouteDevice selectedItem)
+            return;
+
+        var routeEdit = new RouteEdit(selectedItem);
+        routeEdit.ShowDialog(this);
+    }
 }

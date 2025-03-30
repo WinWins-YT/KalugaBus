@@ -1,0 +1,32 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:KalugaBus.AdminPanel.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="KalugaBus.AdminPanel.Views.RouteEdit"
+        Width="600" Height="200"
+        Title="Edit route"
+        x:DataType="views:RouteEdit">
+    <StackPanel Spacing="5">
+        <Grid ColumnDefinitions="Auto,*" Margin="8">
+            <Label Content="Name: " Grid.Column="0" VerticalAlignment="Center"></Label>
+            <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Text="{Binding RouteName, Mode=TwoWay}"></TextBox>
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*" Margin="8">
+            <Label Content="Route: " VerticalAlignment="Center"></Label>
+            <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Text="{Binding Route, Mode=TwoWay}"></TextBox>
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*" Margin="8">
+            <Label Content="Type: " Grid.Column="0" VerticalAlignment="Center"></Label>
+            <ComboBox Grid.Column="1" SelectedIndex="{Binding RouteType, Mode=TwoWay}">
+                <ComboBox.Items>
+                    <ComboBoxItem Content="Bus"></ComboBoxItem>
+                    <ComboBoxItem Content="Trolleybus"></ComboBoxItem>
+                </ComboBox.Items>
+            </ComboBox>
+        </Grid>
+        <Button Margin="8" Content="Save" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"></Button>
+    </StackPanel>
+        
+</Window>
