@@ -22,7 +22,7 @@
                    TextChanged="InputView_OnTextChanged"/>
             <ListView x:Name="StopsList"
                       x:DataType="local:StopsPage"
-                      RowHeight="{OnPlatform Android=60}"
+                      HasUnevenRows="True"
                       SelectionMode="None"
                       ItemsSource="{Binding Stops}"
                       ItemTapped="StopsList_OnItemTapped">

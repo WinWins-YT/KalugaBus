@@ -1,5 +1,8 @@
-﻿using KalugaBus.Models;
+﻿using System.Text;
+using KalugaBus.Enums;
+using KalugaBus.Models;
 using KalugaBus.PointProviders;
+using KalugaBus.RefactoredMapsUi.Renderers;
 using KalugaBus.StyleRenderers;
 using KalugaBus.Styles;
 using Mapsui;
@@ -11,7 +14,9 @@ using Mapsui.Projections;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
-using Mapsui.Widgets.Zoom;
+using Mapsui.Widgets;
+using Mapsui.Widgets.ButtonWidgets;
+using Mapsui.Widgets.InfoWidgets;
 using NetTopologySuite.Geometries;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
 using Color = Mapsui.Styles.Color;
@@ -44,13 +49,15 @@ public partial class MainPage : IQueryAttributable
         {
             Fill = null,
             Outline = null,
-            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 }
+            Line = new Pen { Color = Color.FromArgb(200, 51, 45, 237), Width = 5 },
+            MaxVisible = 30
         };
         _backLineStyle = new VectorStyle
         {
             Fill = null,
             Outline = null,
-            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 }
+            Line = new Pen { Color = Color.FromArgb(200, 237, 55, 45), Width = 5 },
+            MaxVisible = 30
         };
     }
 
@@ -59,18 +66,15 @@ public partial class MainPage : IQueryAttributable
         if (MapView.Map.Layers.Any(x => x.Name == "Buses"))
             return;
 
-        MapView.Map.Home = map =>
-        {
-            var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
-            map.CenterOnAndZoomTo(point, 15);
-        };
+        MapView.Map.Navigator.CenterOnAndZoomTo(SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint(), 15);
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
 
-        var stationsLayer = new MemoryLayer();
-        stationsLayer.Name = "Stations";
-        stationsLayer.IsMapInfoLayer = true;
-        stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
+        var stationsLayer = new MemoryLayer
+        {
+            Name = "Stations",
+            Style = new ThemeStyle(_ => _stationStyle)
+        };
         _stationPointProvider.DataChanged += async (_, _) =>
         {
             stationsLayer.Features = await _stationPointProvider.GetFeaturesAsync(null!);
@@ -83,7 +87,6 @@ public partial class MainPage : IQueryAttributable
         MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
             Name = "Buses",
-            IsMapInfoLayer = true,
             Style = new ThemeStyle(_ => _busStyle)
         });
         
@@ -92,15 +95,37 @@ public partial class MainPage : IQueryAttributable
             Orientation = Orientation.Vertical,
             VerticalAlignment = VerticalAlignment.Bottom,
             HorizontalAlignment = HorizontalAlignment.Right,
-            MarginX = 20,
-            MarginY = 20,
+            Margin = new MRect(20)
         });
         
-        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRenderer);
+        var infoWidget = new MapInfoWidget(MapView.Map, x => x.Name == "Buses")
+        {
+            FeatureToText = feature =>
+            {
+                if (feature is not PointFeature pointFeature || pointFeature["tag"]?.ToString() != "bus")
+                    return string.Empty;
+
+                var output = new StringBuilder();
+                var trackType = (TrackType)(pointFeature["track_type"] ?? 0);
+
+                output.Append(trackType == TrackType.Bus ? "Автобус №" : "Троллейбус №");
+                output.AppendLine(pointFeature["number"]?.ToString() ?? string.Empty);
+                output.AppendLine($"Номер: {pointFeature["bus_number"]?.ToString() ?? string.Empty}");
+                output.AppendLine($"Скорость: {pointFeature["speed"]?.ToString() ?? string.Empty} км/ч");
+                output.AppendLine();
+                output.AppendLine($"Машин на линии: {pointFeature["bus_count"]?.ToString() ?? string.Empty}");
+
+                return output.ToString();
+            },
+            TextColor = Color.White,
+            TextSize = 14
+        };
+        MapView.Map.Widgets.Add(infoWidget);
         
-        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(StationStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(StationStyle), _stationStyleRenderer);
+        MapRenderer.RegisterStyleRenderer(typeof(BusStyle), _busStyleRenderer);
+        MapRenderer.RegisterStyleRenderer(typeof(StationStyle), _stationStyleRenderer);
+        
+        MapRenderer.RegisterWidgetRenderer(typeof(MapInfoWidget), new MapInfoWidgetRenderer());
         
         MapView.Info += MapViewOnInfo;
         
@@ -109,7 +134,7 @@ public partial class MainPage : IQueryAttributable
 
     private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
     {
-        var feature = e.MapInfo?.Feature;
+        var feature = e.GetMapInfo(MapView.Map.Layers.Where(x => x.Name is "Buses" or "Stations")).Feature;
         if (feature is null)
         {
             (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
@@ -283,7 +308,7 @@ public partial class MainPage : IQueryAttributable
 
     private void ClearBusRoute()
     {
-        _lineLayer.Features = Array.Empty<IFeature>();
+        _lineLayer.Features = [];
         _lineLayer.DataHasChanged();
     }
 }

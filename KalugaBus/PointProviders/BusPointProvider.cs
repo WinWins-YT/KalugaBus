@@ -188,6 +188,9 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             busFeature["rotation"] = rotation;
             busFeature["track_type"] = device.TrackType;
             busFeature["track_id"] = device.TrackId;
+            busFeature["bus_number"] = device.Number;
+            busFeature["speed"] = device.Speed;
+            busFeature["bus_count"] = devices.Count(x => x.TrackId == device.TrackId);
             busFeature["ID"] = device.Id;
 
             _previousPoints[device.Id] = busFeature.Point;
@@ -207,10 +210,10 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
 
     private void OnDataChanged()
     {
-        DataChanged?.Invoke(this, new DataChangedEventArgs(null, false, null));
+        DataChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public event DataChangedEventHandler? DataChanged;
+    public event EventHandler? DataChanged;
 
     public void Dispose()
     {

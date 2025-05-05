@@ -106,7 +106,7 @@ public partial class StopInfoPage : ContentPage
         var forecastJson = await _httpClient.GetStringAsync(
             $"https://bus40.su/default.aspx?target=main&action=get_forecast&station_id={Stop.Station.Id}&track_id={trackId}");
         if (string.IsNullOrEmpty(forecastJson))
-            return Array.Empty<Forecast>();
+            return [];
         
         var forecasts =
             JsonSerializer.Deserialize<List<Forecast>>(forecastJson, _jsonSerializerOptions) ??

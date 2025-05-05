@@ -11,13 +11,15 @@ namespace KalugaBus;
 
 public partial class RoutesPage : ContentPage
 {
-    private readonly HttpClient _httpClient = new();
+    private readonly HttpClient _httpClient = new()
+    {
+        Timeout = new TimeSpan(0, 0, 2)
+    };
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly List<long> _favouredTracks = [];
     private bool _favouritesChanged;
     
     public ObservableCollection<RouteDevice> Devices { get; set; } = [];
-    public Command FavouriteCommand { get; set; }
     
     public RoutesPage()
     {
@@ -29,7 +31,6 @@ public partial class RoutesPage : ContentPage
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
-        FavouriteCommand = new Command(Favourite_OnClicked);
         
         var json = Preferences.Get("favoured_tracks", "");
         if (!string.IsNullOrEmpty(json))
@@ -76,14 +77,18 @@ public partial class RoutesPage : ContentPage
             var outputList = JsonSerializer.Deserialize<List<RouteDevice>>(tracksJson, _jsonSerializerOptions) ??
                              throw new InvalidOperationException("Wrong JSON was received from get_tracks.json");
 
-            Preferences.Set("cached_tracks", JsonSerializer.Serialize(outputList, _jsonSerializerOptions));
+            var cachedTracksFilePath = Path.Combine(FileSystem.Current.CacheDirectory, "cached_tracks.json");
+            await File.WriteAllTextAsync(cachedTracksFilePath, tracksJson);
+            
             return outputList;
         }
         catch (Exception)
         {
-            var cachedTracks = Preferences.Get("cached_tracks", "");
-            if (cachedTracks == "")
+            var cachedTracksFilePath = Path.Combine(FileSystem.Current.CacheDirectory, "cached_tracks.json");
+            if (!File.Exists(cachedTracksFilePath))
                 throw;
+
+            var cachedTracks = await File.ReadAllTextAsync(cachedTracksFilePath);
             
             return JsonSerializer.Deserialize<List<RouteDevice>>(cachedTracks, _jsonSerializerOptions) ??
                    throw new InvalidOperationException("Wrong JSON was saved in cached_tracks");
@@ -98,9 +103,17 @@ public partial class RoutesPage : ContentPage
         await Shell.Current.GoToAsync($"///{nameof(MainPage)}?TrackId={device.TrackId}");
     }
 
-    private void Favourite_OnClicked(object trackId)
+    private async void MenuItem_OnClicked(object? sender, EventArgs e)
     {
-        var id = (long)trackId;
+        await Shell.Current.GoToAsync($"///{nameof(MainPage)}?ShowFavoured=1");
+    }
+
+    private void Favourite_OnClicked(object? sender, EventArgs e)
+    {
+        var trackId = (sender as ImageButton)?.CommandParameter;
+        if (trackId is not long id) 
+            return;
+        
         var device = Devices.First(x => x.TrackId == id);
         var deviceIndex = Devices.IndexOf(device);
         Devices.Remove(device);
@@ -119,10 +132,5 @@ public partial class RoutesPage : ContentPage
 
         var json = JsonSerializer.Serialize(_favouredTracks);
         Preferences.Set("favoured_tracks", json);
-    }
-
-    private async void MenuItem_OnClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync($"///{nameof(MainPage)}?ShowFavoured=1");
     }
 }

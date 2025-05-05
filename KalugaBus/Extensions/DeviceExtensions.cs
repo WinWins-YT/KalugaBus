@@ -10,7 +10,10 @@ static class DeviceExtensions
 {
     public static MPoint GetLastStopLocation(this Models.Device device, List<TrackPolyline> polylines)
     {
-        var polyline = polylines.First(x => x.Id == device.TrackId);
+        var polyline = polylines.FirstOrDefault(x => x.Id == device.TrackId);
+        if (polyline is null) 
+            return new MPoint();
+        
         var angle = device.Direction switch
         {
             Direction.Direct => SphericalMercator

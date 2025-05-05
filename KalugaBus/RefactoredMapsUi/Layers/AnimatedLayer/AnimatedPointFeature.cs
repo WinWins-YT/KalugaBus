@@ -59,9 +59,4 @@ internal class AnimatedPointFeature : PointFeature
         var elapsedTime = currentTime - startTime;
         return easing.Ease(elapsedTime / (float)animationDuration);
     }
-
-    public object Clone()
-    {
-        return new AnimatedPointFeature(this);
-    }
 }
