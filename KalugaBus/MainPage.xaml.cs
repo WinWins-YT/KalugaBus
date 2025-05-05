@@ -11,6 +11,7 @@ using Mapsui.Projections;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
+using Mapsui.Widgets;
 using Mapsui.Widgets.Zoom;
 using NetTopologySuite.Geometries;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
@@ -69,10 +70,12 @@ public partial class MainPage : IQueryAttributable
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
 
-        var stationsLayer = new MemoryLayer();
-        stationsLayer.Name = "Stations";
-        stationsLayer.IsMapInfoLayer = true;
-        stationsLayer.Style = new ThemeStyle(_ => _stationStyle);
+        var stationsLayer = new MemoryLayer
+        {
+            Name = "Stations",
+            IsMapInfoLayer = true,
+            Style = new ThemeStyle(_ => _stationStyle)
+        };
         _stationPointProvider.DataChanged += async (_, _) =>
         {
             stationsLayer.Features = await _stationPointProvider.GetFeaturesAsync(null!);
@@ -97,6 +100,9 @@ public partial class MainPage : IQueryAttributable
             MarginX = 20,
             MarginY = 20,
         });
+        
+        var infoWidget = new MapInfoWidget(MapView.Map);
+        MapView.Map.Widgets.Add(new MapInfoWidget(MapView.Map));
         
         if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
             MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRenderer);
