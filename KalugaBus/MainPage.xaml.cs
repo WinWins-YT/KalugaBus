@@ -1,4 +1,6 @@
-﻿using KalugaBus.Models;
+﻿using System.Text;
+using KalugaBus.Enums;
+using KalugaBus.Models;
 using KalugaBus.PointProviders;
 using KalugaBus.StyleRenderers;
 using KalugaBus.Styles;
@@ -101,8 +103,27 @@ public partial class MainPage : IQueryAttributable
             MarginY = 20,
         });
         
-        var infoWidget = new MapInfoWidget(MapView.Map);
-        MapView.Map.Widgets.Add(new MapInfoWidget(MapView.Map));
+        var infoWidget = new MapInfoWidget(MapView.Map)
+        {
+            FeatureToText = feature =>
+            {
+                if (feature is not PointFeature pointFeature || pointFeature["tag"]?.ToString() != "bus")
+                    return string.Empty;
+
+                var output = new StringBuilder();
+                var trackType = (TrackType)(pointFeature["track_type"] ?? 0);
+
+                output.Append(trackType == TrackType.Bus ? "Автобус №" : "Троллейбус №");
+                output.AppendLine(pointFeature["number"]?.ToString() ?? string.Empty);
+                output.AppendLine($"Номер: {pointFeature["bus_number"]?.ToString() ?? string.Empty}");
+                output.AppendLine($"Скорость: {pointFeature["speed"]?.ToString() ?? string.Empty} км/ч");
+                output.AppendLine();
+                output.AppendLine($"Машин на линии: {pointFeature["bus_count"]?.ToString() ?? string.Empty}");
+
+                return output.ToString();
+            }
+        };
+        MapView.Map.Widgets.Add(infoWidget);
         
         if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
             MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRenderer);
@@ -291,7 +312,7 @@ public partial class MainPage : IQueryAttributable
 
     private void ClearBusRoute()
     {
-        _lineLayer.Features = Array.Empty<IFeature>();
+        _lineLayer.Features = [];
         _lineLayer.DataHasChanged();
     }
 }
