@@ -2,6 +2,7 @@
 using KalugaBus.Enums;
 using KalugaBus.Models;
 using KalugaBus.PointProviders;
+using KalugaBus.RefactoredMapsUi.Renderers;
 using KalugaBus.StyleRenderers;
 using KalugaBus.Styles;
 using Mapsui;
@@ -115,12 +116,16 @@ public partial class MainPage : IQueryAttributable
                 output.AppendLine($"Машин на линии: {pointFeature["bus_count"]?.ToString() ?? string.Empty}");
 
                 return output.ToString();
-            }
+            },
+            TextColor = Color.White,
+            TextSize = 14
         };
         MapView.Map.Widgets.Add(infoWidget);
         
         MapRenderer.RegisterStyleRenderer(typeof(BusStyle), _busStyleRenderer);
         MapRenderer.RegisterStyleRenderer(typeof(StationStyle), _stationStyleRenderer);
+        
+        MapRenderer.RegisterWidgetRenderer(typeof(MapInfoWidget), new MapInfoWidgetRenderer());
         
         MapView.Info += MapViewOnInfo;
         
@@ -129,7 +134,7 @@ public partial class MainPage : IQueryAttributable
 
     private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
     {
-        var feature = e.GetMapInfo(MapView.Map.Layers.Where(x => x.Name == "Buses")).Feature;
+        var feature = e.GetMapInfo(MapView.Map.Layers.Where(x => x.Name is "Buses" or "Stations")).Feature;
         if (feature is null)
         {
             (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();

@@ -57,7 +57,7 @@
                                 HorizontalOptions="End"
                                 HeightRequest="20" WidthRequest="20"
                                 MaximumHeightRequest="20" MaximumWidthRequest="20"
-                                Command="{Binding Source={x:Reference ContentPage}, Path=FavouriteCommand}"
+                                Clicked="Favourite_OnClicked"
                                 CommandParameter="{Binding TrackId}">
                                 <ImageButton.Style>
                                     <Style TargetType="{x:Type ImageButton}">
