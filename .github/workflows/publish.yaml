@@ -71,10 +71,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: com.danimatcorp.kalugabus.apk
-          path: KalugaBus/bin/Release/net8.0-android/publish/com.danimatcorp.kalugabus-Signed.apk
+          path: KalugaBus/bin/Release/net9.0-android/publish/com.danimatcorp.kalugabus-Signed.apk
 
       - name: Archive AAB
         uses: actions/upload-artifact@v4
         with:
           name: com.danimatcorp.kalugabus.aab
-          path: KalugaBus/bin/Release/net8.0-android/publish/com.danimatcorp.kalugabus-Signed.aab
+          path: KalugaBus/bin/Release/net9.0-android/publish/com.danimatcorp.kalugabus-Signed.aab
