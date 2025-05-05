@@ -2,6 +2,8 @@
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Rendering;
+using Mapsui.Rendering.Skia.Cache;
+using Mapsui.Rendering.Skia.Extensions;
 using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using Mapsui.Utilities;
@@ -13,7 +15,7 @@ public class StationStyleRenderer : ISkiaStyleRenderer
 {
     private readonly SKPicture _busStopPicture = GetPicture("bus_stop.svg");
 
-    public bool Draw(SKCanvas canvas, Viewport viewport, ILayer layer, IFeature feature, IStyle style, IRenderCache renderCache,
+    public bool Draw(SKCanvas canvas, Viewport viewport, ILayer layer, IFeature feature, IStyle style, RenderService renderService,
         long iteration)
     {
         if (feature is not PointFeature pointFeature || pointFeature["tag"]?.ToString() != "station")
@@ -37,6 +39,6 @@ public class StationStyleRenderer : ISkiaStyleRenderer
     private static SKPicture GetPicture(string embeddedResourcePath)
     {
         using var stream = FileSystem.OpenAppPackageFileAsync(embeddedResourcePath).GetAwaiter().GetResult();
-        return stream.LoadSvgPicture();
+        return stream.LoadSvg().Picture ?? throw new NullReferenceException("SVG picture was null");
     }
 }

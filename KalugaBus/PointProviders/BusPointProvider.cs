@@ -210,10 +210,10 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
 
     private void OnDataChanged()
     {
-        DataChanged?.Invoke(this, new DataChangedEventArgs(null, false, null));
+        DataChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public event DataChangedEventHandler? DataChanged;
+    public event EventHandler? DataChanged;
 
     public void Dispose()
     {

@@ -14,7 +14,8 @@ using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using Mapsui.Widgets;
-using Mapsui.Widgets.Zoom;
+using Mapsui.Widgets.ButtonWidgets;
+using Mapsui.Widgets.InfoWidgets;
 using NetTopologySuite.Geometries;
 using AnimatedPointLayer = KalugaBus.RefactoredMapsUi.Layers.AnimatedLayer.AnimatedPointLayer;
 using Color = Mapsui.Styles.Color;
@@ -64,18 +65,13 @@ public partial class MainPage : IQueryAttributable
         if (MapView.Map.Layers.Any(x => x.Name == "Buses"))
             return;
 
-        MapView.Map.Home = map =>
-        {
-            var point = SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint();
-            map.CenterOnAndZoomTo(point, 15);
-        };
+        MapView.Map.Navigator.CenterOnAndZoomTo(SphericalMercator.FromLonLat(36.2754200, 54.5293000).ToMPoint(), 15);
 
         MapView.Map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
 
         var stationsLayer = new MemoryLayer
         {
             Name = "Stations",
-            IsMapInfoLayer = true,
             Style = new ThemeStyle(_ => _stationStyle)
         };
         _stationPointProvider.DataChanged += async (_, _) =>
@@ -90,7 +86,6 @@ public partial class MainPage : IQueryAttributable
         MapView.Map.Layers.Add(new AnimatedPointLayer(_busPointProvider)
         {
             Name = "Buses",
-            IsMapInfoLayer = true,
             Style = new ThemeStyle(_ => _busStyle)
         });
         
@@ -99,11 +94,10 @@ public partial class MainPage : IQueryAttributable
             Orientation = Orientation.Vertical,
             VerticalAlignment = VerticalAlignment.Bottom,
             HorizontalAlignment = HorizontalAlignment.Right,
-            MarginX = 20,
-            MarginY = 20,
+            Margin = new MRect(20)
         });
         
-        var infoWidget = new MapInfoWidget(MapView.Map)
+        var infoWidget = new MapInfoWidget(MapView.Map, x => x.Name == "Buses")
         {
             FeatureToText = feature =>
             {
@@ -125,11 +119,8 @@ public partial class MainPage : IQueryAttributable
         };
         MapView.Map.Widgets.Add(infoWidget);
         
-        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(BusStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(BusStyle), _busStyleRenderer);
-        
-        if (MapView.Renderer is MapRenderer && !MapView.Renderer.StyleRenderers.ContainsKey(typeof(StationStyle)))
-            MapView.Renderer.StyleRenderers.Add(typeof(StationStyle), _stationStyleRenderer);
+        MapRenderer.RegisterStyleRenderer(typeof(BusStyle), _busStyleRenderer);
+        MapRenderer.RegisterStyleRenderer(typeof(StationStyle), _stationStyleRenderer);
         
         MapView.Info += MapViewOnInfo;
         
@@ -138,7 +129,7 @@ public partial class MainPage : IQueryAttributable
 
     private async void MapViewOnInfo(object? sender, MapInfoEventArgs e)
     {
-        var feature = e.MapInfo?.Feature;
+        var feature = e.GetMapInfo(MapView.Map.Layers.Where(x => x.Name == "Buses")).Feature;
         if (feature is null)
         {
             (MapView.Map.Layers.First(x => x.Name == "Buses") as AnimatedPointLayer)?.ClearCache();
