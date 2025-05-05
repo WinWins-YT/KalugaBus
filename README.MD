@@ -6,7 +6,7 @@
 
 Использует [MapsUi](https://github.com/Mapsui/Mapsui) и [Bus40](https://bus40.su)
 
-[<img src="https://seeklogo.com/images/G/get-it-on-google-play-badge-logo-8CDE582776-seeklogo.com.png" width="150px" alt="Google Play">](https://play.google.com/store/apps/details?id=com.danimatcorp.kalugabus)
+[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/1920px-Google_Play_Store_badge_EN.svg.png" width="150px" alt="Google Play">](https://play.google.com/store/apps/details?id=com.danimatcorp.kalugabus)
 [<img src="https://www.rustore.ru/help/icons/logo-color-dark.png" width="150px" alt="RuStore">](https://www.rustore.ru/catalog/app/com.danimatcorp.kalugabus)
 
 ### Имеющийся функционал:
