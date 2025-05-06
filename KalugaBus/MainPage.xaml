@@ -20,7 +20,7 @@
     
     <maui:MapView x:Name="MapView"
                   RotationLock="True"
-                  VerticalOptions="FillAndExpand"
+                  VerticalOptions="Fill"
                   HorizontalOptions="Fill"
                   IsZoomButtonVisible="False"
                   IsNorthingButtonVisible="False"/>
