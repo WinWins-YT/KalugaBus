@@ -192,21 +192,32 @@ public partial class MainPage : IQueryAttributable
         
         var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 
-        var permission = await CheckAndRequestLocationPermission();
-        if (permission != PermissionStatus.Granted)
+        bool permissionGranted = false;
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var permission = await CheckAndRequestLocationPermission();
+            permissionGranted = permission == PermissionStatus.Granted;
+        });
+        if (!permissionGranted)
             return;
         
         while (true)
         {
-            Location? location;
+            Location? location = null;
             try
             {
-                location = await Geolocation.GetLocationAsync();
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    location = await Geolocation.GetLocationAsync();
+                });
             }
             catch (InvalidOperationException)
             {
-                await DisplayAlert("Местоположение недоступно",
-                    "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DisplayAlert("Местоположение недоступно",
+                        "Это приложение требует доступа к местоположению. Включите местоположение в настройках", "OK");
+                });
                 break;
             }
             
