@@ -189,7 +189,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             busFeature["track_type"] = device.TrackType;
             busFeature["track_id"] = device.TrackId;
             busFeature["bus_number"] = device.Number;
-            busFeature["speed"] = device.Speed;
+            busFeature["speed"] = (int?)(device.Speed * 1.852);
             busFeature["bus_count"] = devices.Count(x => x.TrackId == device.TrackId);
             busFeature["ID"] = device.Id;
 
